@@ -3,5 +3,5 @@ export type RootStackParamList = {
   PetsList: undefined;
   PetRegister: undefined;
   PetDetails: undefined;
-  Summary: undefined;
+  Dashboard: undefined;
 };

@@ -1,9 +1,9 @@
 import { View, Text } from "react-native";
 
-export default function SummaryScreen() {
+export default function DashboardScreen() {
   return (
     <View>
-      <Text>PetOS Summary</Text>
+      <Text>Resumo do App</Text>
     </View>
   );
 }
