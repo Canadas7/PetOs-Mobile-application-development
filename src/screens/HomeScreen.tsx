@@ -2,7 +2,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import colors from "../styles/colors";
 
-export default function HomeScreen({ navigation }: any) {
+export default function HomeScreen({ navigation, route }: any) {
+  const userName = route.params?.userName || "Tutor";
   return (
     <View style={styles.container}>
       <View style={styles.top}>
@@ -11,13 +12,18 @@ export default function HomeScreen({ navigation }: any) {
           <Text style={styles.logo}>PetOS</Text>
         </View>
 
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>M</Text>
-        </View>
+       <TouchableOpacity
+          style={styles.avatar}
+          onPress={() => navigation.navigate("Profile")}
+        >
+          <Text style={styles.avatarText}>
+            {userName.charAt(0).toUpperCase()}
+  </Text>
+</TouchableOpacity>
       </View>
 
       <View style={styles.greeting}>
-        <Text style={styles.title}>Olá, Maria!</Text>
+        <Text style={styles.title}>Olá, {userName}!</Text>
         <Text style={styles.subtitle}>Como está o seu melhor amigo hoje?</Text>
       </View>
 
