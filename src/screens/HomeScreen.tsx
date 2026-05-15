@@ -1,9 +1,30 @@
+import { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+
 import colors from "../styles/colors";
+import { Pet } from "../types/Pet";
+import { getPets } from "../storage/petStorage";
+import BottomNavigation from "../components/BottomNavigation";
 
 export default function HomeScreen({ navigation, route }: any) {
   const userName = route.params?.userName || "Tutor";
+  const [pet, setPet] = useState<Pet | null>(null);
+
+  useEffect(() => {
+    loadPet();
+  }, []);
+
+  async function loadPet() {
+    const pets = await getPets();
+
+    if (pets.length > 0) {
+      setPet(pets[0]);
+    } else {
+      setPet(null);
+    }
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.top}>
@@ -12,14 +33,14 @@ export default function HomeScreen({ navigation, route }: any) {
           <Text style={styles.logo}>PetOS</Text>
         </View>
 
-       <TouchableOpacity
+        <TouchableOpacity
           style={styles.avatar}
           onPress={() => navigation.navigate("Profile")}
         >
           <Text style={styles.avatarText}>
             {userName.charAt(0).toUpperCase()}
-  </Text>
-</TouchableOpacity>
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.greeting}>
@@ -27,33 +48,53 @@ export default function HomeScreen({ navigation, route }: any) {
         <Text style={styles.subtitle}>Como está o seu melhor amigo hoje?</Text>
       </View>
 
-      <TouchableOpacity
-        style={styles.petCard}
-        onPress={() => navigation.navigate("PetsList")}
-      >
-        <View style={styles.petContent}>
-          <Text style={styles.petLabel}>Meu Pet:</Text>
-          <Text style={styles.petName}>Thor</Text>
+      {pet ? (
+        <TouchableOpacity
+          style={styles.petCard}
+          onPress={() => navigation.navigate("PetsList")}
+        >
+          <View style={styles.petContent}>
+            <Text style={styles.petLabel}>Meu Pet:</Text>
+            <Text style={styles.petName}>{pet.name}</Text>
 
-          <View style={styles.petInfoRow}>
-            <Ionicons name="calendar-outline" size={16} color={colors.white} />
-            <Text style={styles.petInfo}>3 anos</Text>
+            <View style={styles.petInfoRow}>
+              <Ionicons
+                name="calendar-outline"
+                size={16}
+                color={colors.white}
+              />
+              <Text style={styles.petInfo}>{pet.age}</Text>
+            </View>
+
+            <View style={styles.petInfoRow}>
+              <MaterialIcons name="pets" size={16} color={colors.white} />
+              <Text style={styles.petInfo}>{pet.breed}</Text>
+            </View>
           </View>
 
-          <View style={styles.petInfoRow}>
-            <MaterialIcons name="pets" size={16} color={colors.white} />
-            <Text style={styles.petInfo}>Golden Retriever</Text>
+          <View style={styles.petImagePlaceholder}>
+            <MaterialIcons name="pets" size={64} color={colors.white} />
           </View>
-        </View>
 
-        <View style={styles.petImagePlaceholder}>
-          <MaterialIcons name="pets" size={64} color={colors.white} />
-        </View>
-
-        <View style={styles.petArrow}>
-          <Ionicons name="chevron-forward" size={22} color={colors.primary} />
-        </View>
-      </TouchableOpacity>
+          <View style={styles.petArrow}>
+            <Ionicons
+              name="chevron-forward"
+              size={22}
+              color={colors.primary}
+            />
+          </View>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          style={styles.emptyPetCard}
+          onPress={() => navigation.navigate("PetRegister")}
+        >
+          <Text style={styles.emptyPetTitle}>Nenhum pet cadastrado</Text>
+          <Text style={styles.emptyPetText}>
+            Cadastre seu primeiro pet para começar.
+          </Text>
+        </TouchableOpacity>
+      )}
 
       <View style={styles.whitePanel}>
         <View style={styles.cardsArea}>
@@ -114,36 +155,10 @@ export default function HomeScreen({ navigation, route }: any) {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navButton}>
-          <Ionicons name="home" size={23} color={colors.teal} />
-          <Text style={styles.navActive}>Início</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.navButton}
-          onPress={() => navigation.navigate("PetsList")}
-        >
-          <MaterialIcons name="pets" size={23} color={colors.gray} />
-          <Text style={styles.navItem}>Pets</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.navButton}
-          onPress={() => navigation.navigate("PetRegister")}
-        >
-          <Ionicons name="add-circle" size={23} color={colors.gray} />
-          <Text style={styles.navItem}>Cadastrar</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.navButton}
-          onPress={() => navigation.navigate("Dashboard")}
-        >
-          <Ionicons name="grid" size={23} color={colors.gray} />
-          <Text style={styles.navItem}>Painel</Text>
-        </TouchableOpacity>
-      </View>
+        <BottomNavigation
+        navigation={navigation}
+        current="Home"
+      />     
     </View>
   );
 }
@@ -252,6 +267,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  emptyPetCard: {
+    backgroundColor: colors.white,
+    borderRadius: 22,
+    padding: 24,
+    marginBottom: 18,
+  },
+  emptyPetTitle: {
+    color: colors.primary,
+    fontSize: 22,
+    fontWeight: "800",
+  },
+  emptyPetText: {
+    color: colors.gray,
+    fontSize: 14,
+    marginTop: 10,
+  },
   whitePanel: {
     backgroundColor: colors.white,
     borderRadius: 28,
@@ -270,10 +301,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     alignItems: "center",
     elevation: 3,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
     borderWidth: 1,
     borderColor: "#EEF2F7",
   },
@@ -355,27 +382,5 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: 13,
   },
-  bottomNav: {
-    backgroundColor: colors.white,
-    borderRadius: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginTop: "auto",
-  },
-  navButton: {
-    alignItems: "center",
-    gap: 4,
-  },
-  navActive: {
-    color: colors.teal,
-    fontWeight: "800",
-    fontSize: 12,
-  },
-  navItem: {
-    color: colors.gray,
-    fontWeight: "700",
-    fontSize: 12,
-  },
+ 
 });

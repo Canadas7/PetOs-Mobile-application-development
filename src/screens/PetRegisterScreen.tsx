@@ -8,7 +8,6 @@ import {
 } from "react-native";
 
 import colors from "../styles/colors";
-
 import { savePet } from "../storage/petStorage";
 
 export default function PetRegisterScreen({ navigation }: any) {
@@ -22,12 +21,15 @@ export default function PetRegisterScreen({ navigation }: any) {
       return;
     }
 
+    const formattedAge =
+      Number(age) === 1 ? "1 ano" : `${age} anos`;
+
     const newPet = {
       id: String(Date.now()),
       name,
       species,
       breed,
-      age,
+      age: formattedAge,
     };
 
     await savePet(newPet);
@@ -68,7 +70,10 @@ export default function PetRegisterScreen({ navigation }: any) {
         placeholder="Idade"
         placeholderTextColor={colors.gray}
         value={age}
-        onChangeText={setAge}
+        onChangeText={(text) =>
+          setAge(text.replace(/[^0-9]/g, ""))
+        }
+        keyboardType="numeric"
       />
 
       <TouchableOpacity style={styles.button} onPress={handleSavePet}>
