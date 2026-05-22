@@ -10,7 +10,7 @@ import {
 
 import colors from "../styles/colors";
 
-import { getPets } from "../storage/petStorage";
+import { getPets, deletePet } from "../storage/petStorage";
 import { Pet } from "../types/Pet";
 
 export default function PetsListScreen({ navigation }: any) {
@@ -25,15 +25,18 @@ export default function PetsListScreen({ navigation }: any) {
     setPets(storedPets);
   }
 
+  async function handleDeletePet(id: string) {
+    await deletePet(id);
+    loadPets();
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Meus Pets</Text>
 
       {pets.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>
-            Nenhum pet cadastrado ainda.
-          </Text>
+          <Text style={styles.emptyText}>Nenhum pet cadastrado ainda.</Text>
 
           <TouchableOpacity
             style={styles.button}
@@ -47,31 +50,35 @@ export default function PetsListScreen({ navigation }: any) {
           data={pets}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.petCard}
-              onPress={() =>
-                navigation.navigate("PetDetails", {
-                  pet: item,
-                })
-              }
-            >
-              <Text style={styles.petName}>{item.name}</Text>
+            <View style={styles.petCard}>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate("PetDetails", {
+                    pet: item,
+                  })
+                }
+              >
+                <Text style={styles.petName}>{item.name}</Text>
 
-              <Text style={styles.petInfo}>
-                {item.species} • {item.breed}
-              </Text>
+                <Text style={styles.petInfo}>
+                  {item.species} • {item.breed}
+                </Text>
 
-              <Text style={styles.petAge}>{item.age}</Text>
-            </TouchableOpacity>
+                <Text style={styles.petAge}>{item.age}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() => handleDeletePet(item.id)}
+              >
+                <Text style={styles.deleteButtonText}>Excluir</Text>
+              </TouchableOpacity>
+            </View>
           )}
         />
       )}
 
-       <BottomNavigation
-        navigation={navigation}
-        current="PetsList"
-      />git checkout -b feat/bottom-navigation
-
+      <BottomNavigation navigation={navigation} current="PetsList" />
     </View>
   );
 }
@@ -131,5 +138,16 @@ const styles = StyleSheet.create({
     color: colors.teal,
     marginTop: 10,
     fontWeight: "700",
+  },
+  deleteButton: {
+    backgroundColor: colors.danger,
+    padding: 10,
+    borderRadius: 12,
+    marginTop: 14,
+    alignItems: "center",
+  },
+  deleteButtonText: {
+    color: colors.white,
+    fontWeight: "800",
   },
 });

@@ -20,3 +20,15 @@ export async function getPets(): Promise<Pet[]> {
 
   return JSON.parse(data);
 }
+
+export async function deletePet(id: string) {
+  const storedPets = await getPets();
+
+  const updatedPets = storedPets.filter((pet) => pet.id !== id);
+
+  await AsyncStorage.setItem(PETS_KEY, JSON.stringify(updatedPets));
+}
+
+export async function clearPets() {
+  await AsyncStorage.removeItem(PETS_KEY);
+}

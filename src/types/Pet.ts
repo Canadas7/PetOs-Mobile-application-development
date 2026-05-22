@@ -4,4 +4,5 @@ export type Pet = {
   species: string;
   breed: string;
   age: string;
+  imageUri?: string;
 };

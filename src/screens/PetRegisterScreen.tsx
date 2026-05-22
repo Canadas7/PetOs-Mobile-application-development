@@ -1,3 +1,4 @@
+import BottomNavigation from "../components/BottomNavigation";
 import { useState } from "react";
 import {
   View,
@@ -5,7 +6,10 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Image,
 } from "react-native";
+
+import * as ImagePicker from "expo-image-picker";
 
 import colors from "../styles/colors";
 import { savePet } from "../storage/petStorage";
@@ -15,14 +19,27 @@ export default function PetRegisterScreen({ navigation }: any) {
   const [species, setSpecies] = useState("");
   const [breed, setBreed] = useState("");
   const [age, setAge] = useState("");
+  const [imageUri, setImageUri] = useState("");
+
+  async function handlePickImage() {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+    }
+  }
 
   async function handleSavePet() {
     if (!name || !species || !breed || !age) {
       return;
     }
 
-    const formattedAge =
-      Number(age) === 1 ? "1 ano" : `${age} anos`;
+    const formattedAge = Number(age) === 1 ? "1 ano" : `${age} anos`;
 
     const newPet = {
       id: String(Date.now()),
@@ -30,6 +47,7 @@ export default function PetRegisterScreen({ navigation }: any) {
       species,
       breed,
       age: formattedAge,
+      imageUri,
     };
 
     await savePet(newPet);
@@ -70,15 +88,23 @@ export default function PetRegisterScreen({ navigation }: any) {
         placeholder="Idade"
         placeholderTextColor={colors.gray}
         value={age}
-        onChangeText={(text) =>
-          setAge(text.replace(/[^0-9]/g, ""))
-        }
+        onChangeText={(text) => setAge(text.replace(/[^0-9]/g, ""))}
         keyboardType="numeric"
       />
+
+      <TouchableOpacity style={styles.imageButton} onPress={handlePickImage}>
+        <Text style={styles.imageButtonText}>Escolher foto do pet</Text>
+      </TouchableOpacity>
+
+      {imageUri ? (
+        <Image source={{ uri: imageUri }} style={styles.previewImage} />
+      ) : null}
 
       <TouchableOpacity style={styles.button} onPress={handleSavePet}>
         <Text style={styles.buttonText}>Salvar Pet</Text>
       </TouchableOpacity>
+
+      <BottomNavigation navigation={navigation} current="PetRegister" />
     </View>
   );
 }
@@ -102,6 +128,24 @@ const styles = StyleSheet.create({
     padding: 16,
     fontSize: 16,
     marginBottom: 16,
+  },
+  imageButton: {
+    backgroundColor: colors.white,
+    padding: 16,
+    borderRadius: 16,
+    alignItems: "center",
+    marginBottom: 18,
+  },
+  imageButtonText: {
+    color: colors.primary,
+    fontWeight: "700",
+  },
+  previewImage: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    alignSelf: "center",
+    marginBottom: 18,
   },
   button: {
     backgroundColor: colors.teal,
