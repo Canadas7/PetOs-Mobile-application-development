@@ -1,7 +1,10 @@
 export type RootStackParamList = {
+  Login: undefined;
   Home: undefined;
   PetsList: undefined;
   PetRegister: undefined;
   PetDetails: undefined;
-  Summary: undefined;
+  Dashboard: undefined;
+  Profile: undefined;
 };
+
