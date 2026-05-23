@@ -1,23 +1,32 @@
 import { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import colors from "../styles/colors";
 import { Pet } from "../types/Pet";
 import { getPets } from "../storage/petStorage";
 import BottomNavigation from "../components/BottomNavigation";
 
 export default function HomeScreen({ navigation, route }: any) {
-  const userName = route.params?.userName || "Tutor";
+  const [userName, setUserName] = useState("Tutor");
   const [pet, setPet] = useState<Pet | null>(null);
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", () => {
-      loadPet();
-    });
+  loadUserName();
 
-    return unsubscribe;
-  }, [navigation]);
+  const unsubscribe = navigation.addListener("focus", () => {
+    loadUserName();
+    loadPet();
+  });
+async function loadUserName() {
+  const storedName = await AsyncStorage.getItem("userName");
+
+  if (storedName) {
+    setUserName(storedName);
+  }
+}
+  return unsubscribe;
+}, [navigation]);
 
   async function loadPet() {
     const pets = await getPets();

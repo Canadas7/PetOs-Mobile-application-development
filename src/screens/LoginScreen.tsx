@@ -7,20 +7,22 @@ import {
   StyleSheet,
 } from "react-native";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import colors from "../styles/colors";
 
 export default function LoginScreen({ navigation }: any) {
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
 
-  function handleLogin() {
+  async function handleLogin() {
     if (!userName || !password) {
       return;
     }
 
-    navigation.navigate("Home", {
-      userName,
-    });
+    await AsyncStorage.setItem("userName", userName);
+
+    navigation.navigate("Home");
   }
 
   return (
