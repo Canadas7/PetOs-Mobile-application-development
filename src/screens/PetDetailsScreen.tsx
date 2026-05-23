@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Image } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 
 import colors from "../styles/colors";
@@ -23,7 +23,11 @@ export default function PetDetailsScreen({ route, navigation }: any) {
 
       <View style={styles.card}>
         <View style={styles.iconBox}>
-          <MaterialIcons name="pets" size={54} color={colors.teal} />
+          {pet.image ? (
+            <Image source={{ uri: pet.image }} style={styles.petImage} />
+          ) : (
+            <MaterialIcons name="pets" size={54} color={colors.teal} />
+          )}
         </View>
 
         <Text style={styles.petName}>{pet.name}</Text>
@@ -76,13 +80,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   iconBox: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     backgroundColor: colors.mint,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
+    overflow: "hidden",
+  },
+  petImage: {
+    width: "100%",
+    height: "100%",
   },
   petName: {
     color: colors.primary,

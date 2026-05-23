@@ -47,7 +47,7 @@ export default function PetRegisterScreen({ navigation }: any) {
       species,
       breed,
       age: formattedAge,
-      imageUri,
+      image: imageUri,
     };
 
     await savePet(newPet);

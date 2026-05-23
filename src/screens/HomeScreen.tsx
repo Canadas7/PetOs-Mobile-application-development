@@ -1,28 +1,36 @@
 import { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import colors from "../styles/colors";
 import { Pet } from "../types/Pet";
 import { getPets } from "../storage/petStorage";
 import BottomNavigation from "../components/BottomNavigation";
 
 export default function HomeScreen({ navigation, route }: any) {
-  const userName = route.params?.userName || "Tutor";
+  const [userName, setUserName] = useState("Tutor");
   const [pet, setPet] = useState<Pet | null>(null);
 
   useEffect(() => {
+  loadUserName();
+
+  const unsubscribe = navigation.addListener("focus", () => {
+    loadUserName();
     loadPet();
-  }, []);
+  });
+async function loadUserName() {
+  const storedName = await AsyncStorage.getItem("userName");
+
+  if (storedName) {
+    setUserName(storedName);
+  }
+}
+  return unsubscribe;
+}, [navigation]);
 
   async function loadPet() {
     const pets = await getPets();
-
-    if (pets.length > 0) {
-      setPet(pets[0]);
-    } else {
-      setPet(null);
-    }
+    setPet(pets.length > 0 ? pets[0] : null);
   }
 
   return (
@@ -58,11 +66,7 @@ export default function HomeScreen({ navigation, route }: any) {
             <Text style={styles.petName}>{pet.name}</Text>
 
             <View style={styles.petInfoRow}>
-              <Ionicons
-                name="calendar-outline"
-                size={16}
-                color={colors.white}
-              />
+              <Ionicons name="calendar-outline" size={16} color={colors.white} />
               <Text style={styles.petInfo}>{pet.age}</Text>
             </View>
 
@@ -73,15 +77,15 @@ export default function HomeScreen({ navigation, route }: any) {
           </View>
 
           <View style={styles.petImagePlaceholder}>
-            <MaterialIcons name="pets" size={64} color={colors.white} />
+            {pet.image ? (
+              <Image source={{ uri: pet.image }} style={styles.petImage} />
+            ) : (
+              <MaterialIcons name="pets" size={64} color={colors.white} />
+            )}
           </View>
 
           <View style={styles.petArrow}>
-            <Ionicons
-              name="chevron-forward"
-              size={22}
-              color={colors.primary}
-            />
+            <Ionicons name="chevron-forward" size={22} color={colors.primary} />
           </View>
         </TouchableOpacity>
       ) : (
@@ -139,11 +143,7 @@ export default function HomeScreen({ navigation, route }: any) {
           onPress={() => navigation.navigate("Dashboard")}
         >
           <View style={styles.alertIcon}>
-            <Ionicons
-              name="shield-checkmark"
-              size={24}
-              color={colors.white}
-            />
+            <Ionicons name="shield-checkmark" size={24} color={colors.white} />
           </View>
 
           <View style={{ flex: 1 }}>
@@ -155,10 +155,7 @@ export default function HomeScreen({ navigation, route }: any) {
         </TouchableOpacity>
       </View>
 
-        <BottomNavigation
-        navigation={navigation}
-        current="Home"
-      />     
+      <BottomNavigation navigation={navigation} current="Home" />
     </View>
   );
 }
@@ -255,6 +252,11 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.22)",
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
+  },
+  petImage: {
+    width: "100%",
+    height: "100%",
   },
   petArrow: {
     position: "absolute",
@@ -382,5 +384,4 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: 13,
   },
- 
 });
