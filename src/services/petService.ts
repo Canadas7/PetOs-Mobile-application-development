@@ -32,6 +32,17 @@ export type PetResponse = {
   ageInMonths: number | null;
 };
 
+type PageResponse<T> = {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+};
+
 export async function createPet(
   data: CreatePetData
 ): Promise<PetResponse> {
@@ -42,11 +53,33 @@ export async function createPet(
 }
 
 export async function getPets(): Promise<PetResponse[]> {
-  return apiRequest<PetResponse[]>("/pets");
+  const response = await apiRequest<PageResponse<PetResponse>>(
+    "/pets?size=100"
+  );
+
+  return response.content;
 }
 
-export async function deletePet(id: number): Promise<void> {
+export async function deletePet(
+  id: number
+): Promise<void> {
   return apiRequest<void>(`/pets/${id}`, {
     method: "DELETE",
+  });
+}
+
+export async function getPetById(
+  id: number
+): Promise<PetResponse> {
+  return apiRequest<PetResponse>(`/pets/${id}`);
+}
+
+export async function updatePet(
+  id: number,
+  data: CreatePetData
+): Promise<PetResponse> {
+  return apiRequest<PetResponse>(`/pets/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
   });
 }
