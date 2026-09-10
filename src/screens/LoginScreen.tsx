@@ -13,11 +13,14 @@ import { useMutation } from "@tanstack/react-query";
 import colors from "../styles/colors";
 import { login } from "../services/authService";
 import { saveAuthSession } from "../storage/authStorage";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState("");
+
+  const { refreshSession } = useAuth();
 
   const loginMutation = useMutation({
     mutationFn: login,
@@ -30,10 +33,7 @@ export default function LoginScreen({ navigation }: any) {
         data.role
       );
 
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "Home" }],
-      });
+      await refreshSession();
     },
 
     onError: (error: Error) => {

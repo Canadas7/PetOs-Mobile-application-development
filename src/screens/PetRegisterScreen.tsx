@@ -1,4 +1,3 @@
-import BottomNavigation from "../components/BottomNavigation";
 import { useState } from "react";
 import {
   View,
@@ -6,62 +5,87 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Image,
+  ActivityIndicator,
 } from "react-native";
 
-import * as ImagePicker from "expo-image-picker";
+import { useMutation } from "@tanstack/react-query";
 
 import colors from "../styles/colors";
-import { savePet } from "../storage/petStorage";
+import { register } from "../services/authService";
+import { saveAuthSession } from "../storage/authStorage";
 
-export default function PetRegisterScreen({ navigation }: any) {
+type UserRole = "TUTOR" | "CLINICA";
+
+export default function RegisterScreen({ navigation }: any) {
   const [name, setName] = useState("");
-  const [species, setSpecies] = useState("");
-  const [breed, setBreed] = useState("");
-  const [age, setAge] = useState("");
-  const [imageUri, setImageUri] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState<UserRole>("TUTOR");
+  const [formError, setFormError] = useState("");
 
-  async function handlePickImage() {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
+  const registerMutation = useMutation({
+    mutationFn: register,
 
-    if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
-    }
-  }
+    onSuccess: async (data) => {
+      await saveAuthSession(
+        data.token,
+        data.name,
+        data.email,
+        data.role
+      );
 
-  async function handleSavePet() {
-    if (!name || !species || !breed || !age) {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Home" }],
+      });
+    },
+
+    onError: (error: Error) => {
+      setFormError(error.message);
+    },
+  });
+
+  function handleRegister() {
+    setFormError("");
+
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      setFormError("Preencha todos os campos.");
       return;
     }
 
-    const formattedAge = Number(age) === 1 ? "1 ano" : `${age} anos`;
+    if (name.trim().length < 2) {
+      setFormError("Digite um nome válido.");
+      return;
+    }
 
-    const newPet = {
-      id: String(Date.now()),
-      name,
-      species,
-      breed,
-      age: formattedAge,
-      image: imageUri,
-    };
+    if (password.length < 8) {
+      setFormError(
+        "A senha deve possuir pelo menos 8 caracteres."
+      );
+      return;
+    }
 
-    await savePet(newPet);
-
-    navigation.navigate("PetsList");
+    registerMutation.mutate({
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      password,
+      role,
+    });
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Cadastrar Pet</Text>
+      <Text style={styles.logo}>PetOS</Text>
+
+      <Text style={styles.title}>Criar conta</Text>
+
+      <Text style={styles.subtitle}>
+        Cadastre-se para começar a utilizar o PetOS.
+      </Text>
 
       <TextInput
         style={styles.input}
-        placeholder="Nome do pet"
+        placeholder="Digite seu nome"
         placeholderTextColor={colors.gray}
         value={name}
         onChangeText={setName}
@@ -69,42 +93,100 @@ export default function PetRegisterScreen({ navigation }: any) {
 
       <TextInput
         style={styles.input}
-        placeholder="Espécie"
+        placeholder="Digite seu e-mail"
         placeholderTextColor={colors.gray}
-        value={species}
-        onChangeText={setSpecies}
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
       />
 
       <TextInput
         style={styles.input}
-        placeholder="Raça"
+        placeholder="Crie uma senha"
         placeholderTextColor={colors.gray}
-        value={breed}
-        onChangeText={setBreed}
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Idade"
-        placeholderTextColor={colors.gray}
-        value={age}
-        onChangeText={(text) => setAge(text.replace(/[^0-9]/g, ""))}
-        keyboardType="numeric"
-      />
+      <Text style={styles.roleTitle}>
+        Selecione o tipo de usuário
+      </Text>
 
-      <TouchableOpacity style={styles.imageButton} onPress={handlePickImage}>
-        <Text style={styles.imageButtonText}>Escolher foto do pet</Text>
-      </TouchableOpacity>
+      <View style={styles.roleContainer}>
+        <TouchableOpacity
+          style={[
+            styles.roleButton,
+            role === "TUTOR" && styles.roleButtonSelected,
+          ]}
+          onPress={() => setRole("TUTOR")}
+        >
+          <Text
+            style={[
+              styles.roleButtonText,
+              role === "TUTOR" &&
+                styles.roleButtonTextSelected,
+            ]}
+          >
+            Tutor
+          </Text>
+        </TouchableOpacity>
 
-      {imageUri ? (
-        <Image source={{ uri: imageUri }} style={styles.previewImage} />
+        <TouchableOpacity
+          style={[
+            styles.roleButton,
+            role === "CLINICA" && styles.roleButtonSelected,
+          ]}
+          onPress={() => setRole("CLINICA")}
+        >
+          <Text
+            style={[
+              styles.roleButtonText,
+              role === "CLINICA" &&
+                styles.roleButtonTextSelected,
+            ]}
+          >
+            Clínica Veterinária
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {formError ? (
+        <Text style={styles.error}>{formError}</Text>
       ) : null}
 
-      <TouchableOpacity style={styles.button} onPress={handleSavePet}>
-        <Text style={styles.buttonText}>Salvar Pet</Text>
+      <TouchableOpacity
+        style={[
+          styles.button,
+          registerMutation.isPending &&
+            styles.buttonDisabled,
+        ]}
+        onPress={handleRegister}
+        disabled={registerMutation.isPending}
+      >
+        {registerMutation.isPending ? (
+          <ActivityIndicator color={colors.primary} />
+        ) : (
+          <Text style={styles.buttonText}>
+            Criar conta
+          </Text>
+        )}
       </TouchableOpacity>
 
-      <BottomNavigation navigation={navigation} current="PetRegister" />
+      <View style={styles.loginContainer}>
+        <Text style={styles.loginText}>
+          Já possui uma conta?
+        </Text>
+
+        <TouchableOpacity
+          onPress={() => navigation.navigate("Login")}
+        >
+          <Text style={styles.loginLink}>
+            Entrar
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -116,12 +198,27 @@ const styles = StyleSheet.create({
     padding: 24,
     justifyContent: "center",
   },
+
+  logo: {
+    color: colors.teal,
+    fontSize: 42,
+    fontWeight: "800",
+    marginBottom: 30,
+  },
+
   title: {
     color: colors.white,
     fontSize: 30,
     fontWeight: "800",
+  },
+
+  subtitle: {
+    color: colors.mint,
+    fontSize: 15,
+    marginTop: 8,
     marginBottom: 28,
   },
+
   input: {
     backgroundColor: colors.white,
     borderRadius: 16,
@@ -129,34 +226,86 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 16,
   },
-  imageButton: {
-    backgroundColor: colors.white,
-    padding: 16,
-    borderRadius: 16,
-    alignItems: "center",
-    marginBottom: 18,
-  },
-  imageButtonText: {
-    color: colors.primary,
+
+  roleTitle: {
+    color: colors.white,
+    fontSize: 15,
     fontWeight: "700",
+    marginTop: 4,
+    marginBottom: 12,
   },
-  previewImage: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    alignSelf: "center",
+
+  roleContainer: {
+    flexDirection: "row",
+    gap: 10,
     marginBottom: 18,
   },
+
+  roleButton: {
+    flex: 1,
+    backgroundColor: colors.white,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    borderRadius: 14,
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+
+  roleButtonSelected: {
+    backgroundColor: colors.teal,
+    borderColor: colors.white,
+  },
+
+  roleButtonText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+
+  roleButtonTextSelected: {
+    color: colors.white,
+  },
+
+  error: {
+    color: "#FFB4B4",
+    fontSize: 14,
+    marginBottom: 12,
+  },
+
   button: {
     backgroundColor: colors.teal,
     padding: 16,
     borderRadius: 16,
     alignItems: "center",
-    marginTop: 12,
+    marginTop: 4,
   },
+
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+
   buttonText: {
     color: colors.primary,
-    fontWeight: "800",
     fontSize: 16,
+    fontWeight: "800",
+  },
+
+  loginContainer: {
+    marginTop: 20,
+    alignItems: "center",
+  },
+
+  loginText: {
+    color: colors.white,
+    fontSize: 14,
+  },
+
+  loginLink: {
+    color: colors.teal,
+    fontSize: 15,
+    fontWeight: "800",
+    marginTop: 6,
   },
 });
