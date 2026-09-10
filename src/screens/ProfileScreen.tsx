@@ -1,76 +1,34 @@
-import { useEffect, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
 
 import colors from "../styles/colors";
 import BottomNavigation from "../components/BottomNavigation";
-
-import {
-  getUserName,
-  getUserEmail,
-  getUserRole,
-  clearAuthSession,
-} from "../storage/authStorage";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function ProfileScreen({ navigation }: any) {
-  const [userName, setUserName] = useState("");
-  const [userEmail, setUserEmail] = useState("");
-  const [userRole, setUserRole] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", () => {
-      loadUserData();
-    });
-
-    return unsubscribe;
-  }, [navigation]);
-
-  async function loadUserData() {
-    try {
-      setLoading(true);
-
-      const name = await getUserName();
-      const email = await getUserEmail();
-      const role = await getUserRole();
-
-      setUserName(name || "Tutor");
-      setUserEmail(email || "");
-      setUserRole(role || "TUTOR");
-    } catch (error) {
-      console.log("Erro ao carregar usuário:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const { session, signOut } = useAuth();
 
   async function handleLogout() {
     try {
-      await clearAuthSession();
-
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "Login" }],
-      });
+      await signOut();
     } catch (error) {
       console.log("Erro ao sair:", error);
     }
   }
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.teal} />
-      </View>
-    );
-  }
+  const userName = session?.name || "Usuário";
+  const userEmail = session?.email || "";
+
+  const userRole =
+    session?.role === "CLINICA"
+      ? "Clínica Veterinária"
+      : "Tutor";
 
   return (
     <View style={styles.container}>
@@ -83,10 +41,12 @@ export default function ProfileScreen({ navigation }: any) {
           </Text>
         </View>
 
-        <Text style={styles.name}>{userName}</Text>
+        <Text style={styles.name}>
+          {userName}
+        </Text>
 
         <Text style={styles.role}>
-          {userRole === "TUTOR" ? "Tutor" : userRole}
+          {userRole}
         </Text>
       </View>
 
@@ -98,9 +58,14 @@ export default function ProfileScreen({ navigation }: any) {
             color={colors.teal}
           />
 
-          <View>
-            <Text style={styles.label}>Nome</Text>
-            <Text style={styles.infoText}>{userName}</Text>
+          <View style={styles.infoContent}>
+            <Text style={styles.label}>
+              Nome
+            </Text>
+
+            <Text style={styles.infoText}>
+              {userName}
+            </Text>
           </View>
         </View>
 
@@ -113,9 +78,14 @@ export default function ProfileScreen({ navigation }: any) {
             color={colors.teal}
           />
 
-          <View>
-            <Text style={styles.label}>E-mail</Text>
-            <Text style={styles.infoText}>{userEmail}</Text>
+          <View style={styles.infoContent}>
+            <Text style={styles.label}>
+              E-mail
+            </Text>
+
+            <Text style={styles.infoText}>
+              {userEmail}
+            </Text>
           </View>
         </View>
 
@@ -123,15 +93,22 @@ export default function ProfileScreen({ navigation }: any) {
 
         <View style={styles.infoRow}>
           <Ionicons
-            name="shield-checkmark-outline"
+            name={
+              session?.role === "CLINICA"
+                ? "medkit-outline"
+                : "paw-outline"
+            }
             size={24}
             color={colors.teal}
           />
 
-          <View>
-            <Text style={styles.label}>Perfil</Text>
+          <View style={styles.infoContent}>
+            <Text style={styles.label}>
+              Tipo de usuário
+            </Text>
+
             <Text style={styles.infoText}>
-              {userRole === "TUTOR" ? "Tutor" : userRole}
+              {userRole}
             </Text>
           </View>
         </View>
@@ -147,7 +124,9 @@ export default function ProfileScreen({ navigation }: any) {
           color={colors.white}
         />
 
-        <Text style={styles.logoutText}>Sair da conta</Text>
+        <Text style={styles.logoutText}>
+          Sair da conta
+        </Text>
       </TouchableOpacity>
 
       <BottomNavigation
@@ -164,13 +143,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     padding: 24,
     paddingTop: 50,
-  },
-
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
   },
 
   title: {
@@ -208,6 +180,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: 26,
     fontWeight: "800",
+    textAlign: "center",
   },
 
   role: {
@@ -227,6 +200,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 14,
     paddingVertical: 10,
+  },
+
+  infoContent: {
+    flex: 1,
   },
 
   label: {
