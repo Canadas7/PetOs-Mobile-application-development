@@ -11,16 +11,17 @@ import {
 import { useMutation } from "@tanstack/react-query";
 
 import colors from "../styles/colors";
-import { login } from "../services/authService";
+import { register } from "../services/authService";
 import { saveAuthSession } from "../storage/authStorage";
 
-export default function LoginScreen({ navigation }: any) {
+export default function RegisterScreen({ navigation }: any) {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState("");
 
-  const loginMutation = useMutation({
-    mutationFn: login,
+  const registerMutation = useMutation({
+    mutationFn: register,
 
     onSuccess: async (data) => {
       await saveAuthSession(
@@ -41,17 +42,29 @@ export default function LoginScreen({ navigation }: any) {
     },
   });
 
-  function handleLogin() {
+  function handleRegister() {
     setFormError("");
 
-    if (!email.trim() || !password.trim()) {
-      setFormError("Preencha o e-mail e a senha.");
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      setFormError("Preencha todos os campos.");
       return;
     }
 
-    loginMutation.mutate({
+    if (name.trim().length < 2) {
+      setFormError("Digite um nome válido.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setFormError("A senha deve possuir pelo menos 8 caracteres.");
+      return;
+    }
+
+    registerMutation.mutate({
+      name: name.trim(),
       email: email.trim().toLowerCase(),
       password,
+      role: "TUTOR",
     });
   }
 
@@ -59,11 +72,19 @@ export default function LoginScreen({ navigation }: any) {
     <View style={styles.container}>
       <Text style={styles.logo}>PetOS</Text>
 
-      <Text style={styles.title}>Bem-vindo!</Text>
+      <Text style={styles.title}>Criar conta</Text>
 
       <Text style={styles.subtitle}>
-        Entre para acompanhar a saúde do seu pet.
+        Cadastre-se para começar a cuidar dos seus pets.
       </Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="Digite seu nome"
+        placeholderTextColor={colors.gray}
+        value={name}
+        onChangeText={setName}
+      />
 
       <TextInput
         style={styles.input}
@@ -77,11 +98,11 @@ export default function LoginScreen({ navigation }: any) {
 
       <TextInput
         style={styles.input}
-        placeholder="Digite sua senha"
+        placeholder="Crie uma senha"
         placeholderTextColor={colors.gray}
-        secureTextEntry
         value={password}
         onChangeText={setPassword}
+        secureTextEntry
       />
 
       {formError ? (
@@ -91,29 +112,27 @@ export default function LoginScreen({ navigation }: any) {
       <TouchableOpacity
         style={[
           styles.button,
-          loginMutation.isPending && styles.buttonDisabled,
+          registerMutation.isPending && styles.buttonDisabled,
         ]}
-        onPress={handleLogin}
-        disabled={loginMutation.isPending}
+        onPress={handleRegister}
+        disabled={registerMutation.isPending}
       >
-        {loginMutation.isPending ? (
+        {registerMutation.isPending ? (
           <ActivityIndicator color={colors.primary} />
         ) : (
-          <Text style={styles.buttonText}>Entrar</Text>
+          <Text style={styles.buttonText}>Criar conta</Text>
         )}
       </TouchableOpacity>
 
-      <View style={styles.registerContainer}>
-        <Text style={styles.registerText}>
-          Ainda não possui uma conta?
+      <View style={styles.loginContainer}>
+        <Text style={styles.loginText}>
+          Já possui uma conta?
         </Text>
 
         <TouchableOpacity
-          onPress={() => navigation.navigate("Register")}
+          onPress={() => navigation.navigate("Login")}
         >
-          <Text style={styles.registerLink}>
-            Criar conta
-          </Text>
+          <Text style={styles.loginLink}>Entrar</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -132,7 +151,7 @@ const styles = StyleSheet.create({
     color: colors.teal,
     fontSize: 42,
     fontWeight: "800",
-    marginBottom: 40,
+    marginBottom: 36,
   },
 
   title: {
@@ -180,17 +199,17 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
 
-  registerContainer: {
+  loginContainer: {
     marginTop: 24,
     alignItems: "center",
   },
 
-  registerText: {
+  loginText: {
     color: colors.white,
     fontSize: 14,
   },
 
-  registerLink: {
+  loginLink: {
     color: colors.teal,
     fontSize: 15,
     fontWeight: "800",
