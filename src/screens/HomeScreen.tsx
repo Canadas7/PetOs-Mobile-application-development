@@ -29,6 +29,8 @@ import {
 
 import { useAuth } from "../contexts/AuthContext";
 
+import ClinicHomeScreen from "./ClinicHomeScreen";
+
 export default function HomeScreen({ navigation }: any) {
   const { session } = useAuth();
 
@@ -124,39 +126,9 @@ export default function HomeScreen({ navigation }: any) {
 
   if (session?.role === "CLINICA") {
     return (
-      <View style={styles.container}>
-        <View style={styles.simpleClinic}>
-          <MaterialIcons
-            name="local-hospital"
-            size={56}
-            color={colors.teal}
-          />
-
-          <Text style={styles.clinicTitle}>
-            Área da Clínica
-          </Text>
-
-          <Text style={styles.clinicText}>
-            A Home da clínica será configurada na próxima etapa.
-          </Text>
-
-          <TouchableOpacity
-            style={styles.clinicButton}
-            onPress={() =>
-              navigation.navigate("PetsList")
-            }
-          >
-            <Text style={styles.clinicButtonText}>
-              Consultar Pets
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <BottomNavigation
-          navigation={navigation}
-          current="Home"
-        />
-      </View>
+      <ClinicHomeScreen
+        navigation={navigation}
+      />
     );
   }
 
@@ -905,36 +877,4 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
-  simpleClinic: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 30,
-  },
-
-  clinicTitle: {
-    color: colors.white,
-    fontSize: 27,
-    fontWeight: "800",
-    marginTop: 15,
-  },
-
-  clinicText: {
-    color: colors.mint,
-    textAlign: "center",
-    marginTop: 8,
-  },
-
-  clinicButton: {
-    backgroundColor: colors.teal,
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 14,
-    marginTop: 22,
-  },
-
-  clinicButtonText: {
-    color: colors.primary,
-    fontWeight: "800",
-  },
 });
