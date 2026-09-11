@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   View,
@@ -34,6 +34,12 @@ import {
   VaccineStatus,
 } from "../services/vaccineService";
 
+import {
+  getRoutinesByPet,
+  RoutineResponse,
+  RoutineType,
+} from "../services/routineService";
+
 import { useAuth } from "../contexts/AuthContext";
 
 export default function VaccinesScreen({
@@ -42,6 +48,8 @@ export default function VaccinesScreen({
   const { session } = useAuth();
 
   const queryClient = useQueryClient();
+
+  const scrollRef = useRef<ScrollView>(null);
 
   const [selectedPetId, setSelectedPetId] =
     useState<number | null>(null);
@@ -91,6 +99,25 @@ export default function VaccinesScreen({
 
     queryFn: () =>
       getVaccinesByPet(selectedPetId!),
+
+    enabled:
+      session?.role === "CLINICA" &&
+      selectedPetId !== null,
+  });
+
+  const {
+    data: routines = [],
+    isLoading: routinesLoading,
+    isError: routinesError,
+    refetch: refetchRoutines,
+  } = useQuery({
+    queryKey: [
+      "routines",
+      selectedPetId,
+    ],
+
+    queryFn: () =>
+      getRoutinesByPet(selectedPetId!),
 
     enabled:
       session?.role === "CLINICA" &&
@@ -212,6 +239,13 @@ export default function VaccinesScreen({
     );
 
     setFormError("");
+
+    setTimeout(() => {
+      scrollRef.current?.scrollTo({
+        y: 150,
+        animated: true,
+      });
+    }, 100);
   }
 
   function validateDate(date: string) {
@@ -344,6 +378,23 @@ export default function VaccinesScreen({
     return labels[status];
   }
 
+  function getRoutineTypeLabel(
+    type: RoutineType
+  ) {
+    const labels: Record<RoutineType, string> = {
+      WALK: "Passeio",
+      FEEDING: "Alimentação",
+      MEDICATION: "Medicação",
+      BATHING: "Banho",
+      GROOMING: "Higiene / Tosa",
+      VET_VISIT: "Consulta veterinária",
+      TRAINING: "Treinamento",
+      OTHER: "Outro",
+    };
+
+    return labels[type];
+  }
+
   function formatDate(
     date: string | null
   ) {
@@ -391,6 +442,7 @@ export default function VaccinesScreen({
   return (
     <View style={styles.container}>
       <ScrollView
+        ref={scrollRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={
           styles.content
@@ -475,6 +527,20 @@ export default function VaccinesScreen({
                   ? "Editar vacina"
                   : "Registrar vacina"}
               </Text>
+
+              {editingVaccine && (
+                <View style={styles.editingNotice}>
+                  <Ionicons
+                    name="create-outline"
+                    size={18}
+                    color={colors.primary}
+                  />
+
+                  <Text style={styles.editingNoticeText}>
+                    Editando: {editingVaccine.name}
+                  </Text>
+                </View>
+              )}
 
               <Text style={styles.label}>
                 Nome da vacina *
@@ -812,6 +878,104 @@ export default function VaccinesScreen({
                 </View>
               ))
             )}
+
+            <Text style={styles.careTitle}>
+              Cuidados informados pelo tutor
+            </Text>
+
+            <Text style={styles.careSubtitle}>
+              Registros de cuidados enviados pelo responsável deste pet.
+            </Text>
+
+            {routinesLoading ? (
+              <View style={styles.loading}>
+                <ActivityIndicator
+                  size="large"
+                  color={colors.teal}
+                />
+
+                <Text style={styles.loadingText}>
+                  Carregando cuidados...
+                </Text>
+              </View>
+            ) : routinesError ? (
+              <View style={styles.emptyCard}>
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={40}
+                  color={colors.teal}
+                />
+
+                <Text style={styles.emptyTitle}>
+                  Não foi possível carregar os cuidados.
+                </Text>
+
+                <TouchableOpacity
+                  style={styles.retryButton}
+                  onPress={() =>
+                    refetchRoutines()
+                  }
+                >
+                  <Text style={styles.retryText}>
+                    Tentar novamente
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : routines.length === 0 ? (
+              <View style={styles.emptyCard}>
+                <Ionicons
+                  name="heart-outline"
+                  size={42}
+                  color={colors.teal}
+                />
+
+                <Text style={styles.emptyTitle}>
+                  Nenhum cuidado registrado
+                </Text>
+
+                <Text style={styles.emptyText}>
+                  O tutor ainda não registrou cuidados para este pet.
+                </Text>
+              </View>
+            ) : (
+              routines.map(
+                (routine: RoutineResponse) => (
+                  <View
+                    key={routine.id}
+                    style={styles.careCard}
+                  >
+                    <View style={styles.careIcon}>
+                      <Ionicons
+                        name="heart-outline"
+                        size={22}
+                        color={colors.white}
+                      />
+                    </View>
+
+                    <View style={styles.careContent}>
+                      <Text style={styles.careType}>
+                        {getRoutineTypeLabel(
+                          routine.type
+                        )}
+                      </Text>
+
+                      {routine.description ? (
+                        <Text style={styles.careDescription}>
+                          {routine.description}
+                        </Text>
+                      ) : null}
+
+                      <Text style={styles.careDate}>
+                        Registrado em{" "}
+                        {formatDate(
+                          routine.recordDate
+                        )}
+                      </Text>
+                    </View>
+                  </View>
+                )
+              )
+            )}
           </>
         )}
       </ScrollView>
@@ -897,6 +1061,25 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
 
+  editingNotice: {
+    backgroundColor: colors.mint,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    marginTop: -8,
+    marginBottom: 16,
+  },
+
+  editingNoticeText: {
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: "700",
+    flex: 1,
+  },
+
   label: {
     color: colors.primary,
     fontSize: 13,
@@ -958,6 +1141,64 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     marginTop: 28,
     marginBottom: 14,
+  },
+
+  careTitle: {
+    color: colors.white,
+    fontSize: 20,
+    fontWeight: "800",
+    marginTop: 30,
+  },
+
+  careSubtitle: {
+    color: colors.mint,
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 4,
+    marginBottom: 14,
+  },
+
+  careCard: {
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    padding: 15,
+    marginBottom: 11,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+
+  careIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.teal,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  careContent: {
+    flex: 1,
+  },
+
+  careType: {
+    color: colors.primary,
+    fontSize: 15,
+    fontWeight: "800",
+  },
+
+  careDescription: {
+    color: colors.gray,
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 4,
+  },
+
+  careDate: {
+    color: colors.gray,
+    fontSize: 11,
+    fontWeight: "700",
+    marginTop: 7,
   },
 
   vaccineCard: {

@@ -12,7 +12,7 @@ import {
   MaterialIcons,
 } from "@expo/vector-icons";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 
 import colors from "../styles/colors";
 import BottomNavigation from "../components/BottomNavigation";
@@ -28,6 +28,11 @@ import {
 } from "../services/alertService";
 
 import { useAuth } from "../contexts/AuthContext";
+
+import {
+  getVaccinesByPet,
+  VaccineResponse,
+} from "../services/vaccineService";
 
 import ClinicHomeScreen from "./ClinicHomeScreen";
 
@@ -61,7 +66,43 @@ export default function HomeScreen({ navigation }: any) {
     ],
     queryFn: getPendingAlerts,
     enabled: session?.role === "TUTOR",
+    refetchOnMount: "always",
+    refetchOnReconnect: true,
   });
+
+  const vaccineQueries = useQueries({
+    queries: pets.map((pet) => ({
+      queryKey: [
+        "vaccines",
+        "tutor-home",
+        pet.id,
+      ],
+      queryFn: () =>
+        getVaccinesByPet(pet.id),
+      enabled:
+        session?.role === "TUTOR",
+      refetchOnMount: "always" as const,
+      refetchOnReconnect: true,
+    })),
+  });
+
+  const allVaccines: VaccineResponse[] =
+    vaccineQueries.flatMap(
+      (query) => query.data ?? []
+    );
+
+  const vaccinesLoading =
+    vaccineQueries.some(
+      (query) => query.isLoading
+    );
+
+  const latestVaccine =
+    allVaccines.length > 0
+      ? [...allVaccines].sort(
+          (a, b) => b.id - a.id
+        )[0]
+      : undefined;
+
 
   const firstPet: PetResponse | undefined = pets[0];
 
@@ -384,7 +425,7 @@ export default function HomeScreen({ navigation }: any) {
             </View>
           </View>
 
-          {alertsLoading ? (
+          {alertsLoading || vaccinesLoading ? (
             <View style={styles.alertLoading}>
               <ActivityIndicator
                 color={colors.teal}
@@ -440,6 +481,45 @@ export default function HomeScreen({ navigation }: any) {
                 )}
               </View>
             </View>
+          ) : latestVaccine ? (
+            <View style={styles.alertCard}>
+              <View style={styles.alertIcon}>
+                <Ionicons
+                  name="medical"
+                  size={24}
+                  color={colors.white}
+                />
+              </View>
+
+              <View style={styles.alertContent}>
+                <Text style={styles.alertPet}>
+                  {latestVaccine.petName}
+                </Text>
+
+                <Text style={styles.alertMessage}>
+                  A clínica registrou a vacina{" "}
+                  {latestVaccine.name}.
+                </Text>
+
+                {latestVaccine.applicationDate && (
+                  <Text style={styles.alertDate}>
+                    Aplicação:{" "}
+                    {formatDate(
+                      latestVaccine.applicationDate
+                    )}
+                  </Text>
+                )}
+
+                {latestVaccine.dueDate && (
+                  <Text style={styles.alertDate}>
+                    Vencimento:{" "}
+                    {formatDate(
+                      latestVaccine.dueDate
+                    )}
+                  </Text>
+                )}
+              </View>
+            </View>
           ) : (
             <View style={styles.noAlertCard}>
               <View style={styles.noAlertIcon}>
@@ -456,7 +536,7 @@ export default function HomeScreen({ navigation }: any) {
                 </Text>
 
                 <Text style={styles.noAlertText}>
-                  Nenhum aviso de vacinação pendente no momento.
+                  Nenhum aviso de vacinação no momento.
                 </Text>
               </View>
             </View>
@@ -464,7 +544,15 @@ export default function HomeScreen({ navigation }: any) {
 
           <TouchableOpacity
             style={styles.refreshAlerts}
-            onPress={() => refetchAlerts()}
+            onPress={async () => {
+              await refetchAlerts();
+
+              await Promise.all(
+                vaccineQueries.map(
+                  (query) => query.refetch()
+                )
+              );
+            }}
           >
             <Ionicons
               name="refresh-outline"
