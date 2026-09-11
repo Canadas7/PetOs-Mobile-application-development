@@ -20,6 +20,7 @@ export default function BottomNavigation({
   const { session } = useAuth();
 
   const isTutor = session?.role === "TUTOR";
+  const isClinica = session?.role === "CLINICA";
 
   return (
     <View style={styles.bottomNav}>
@@ -86,7 +87,7 @@ export default function BottomNavigation({
           }
         >
           <Ionicons
-            name="time-outline"
+            name="heart-outline"
             size={23}
             color={
               current === "History"
@@ -102,7 +103,37 @@ export default function BottomNavigation({
                 : styles.navItem
             }
           >
-            Histórico
+            Cuidados
+          </Text>
+        </TouchableOpacity>
+      )}
+
+      {isClinica && (
+        <TouchableOpacity
+          style={styles.navButton}
+          activeOpacity={0.7}
+          onPress={() =>
+            navigation.navigate("Vaccines")
+          }
+        >
+          <Ionicons
+            name="medical-outline"
+            size={23}
+            color={
+              current === "Vaccines"
+                ? colors.teal
+                : colors.gray
+            }
+          />
+
+          <Text
+            style={
+              current === "Vaccines"
+                ? styles.navActive
+                : styles.navItem
+            }
+          >
+            Vacinas
           </Text>
         </TouchableOpacity>
       )}
@@ -141,15 +172,12 @@ export default function BottomNavigation({
 const styles = StyleSheet.create({
   bottomNav: {
     position: "absolute",
-
     left: 20,
     right: 20,
     bottom: 18,
-
     height: 72,
 
     backgroundColor: colors.white,
-
     borderRadius: 24,
 
     paddingHorizontal: 10,
@@ -171,7 +199,6 @@ const styles = StyleSheet.create({
 
   navButton: {
     flex: 1,
-
     height: 60,
 
     alignItems: "center",
@@ -182,21 +209,15 @@ const styles = StyleSheet.create({
 
   navActive: {
     color: colors.teal,
-
     fontWeight: "800",
-
     fontSize: 11,
-
     textAlign: "center",
   },
 
   navItem: {
     color: colors.gray,
-
     fontWeight: "700",
-
     fontSize: 11,
-
     textAlign: "center",
   },
 });

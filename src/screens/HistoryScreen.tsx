@@ -1,16 +1,14 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
+  StyleSheet,
   ScrollView,
+  TextInput,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 
 import {
@@ -18,7 +16,11 @@ import {
   MaterialIcons,
 } from "@expo/vector-icons";
 
-import { useQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 import colors from "../styles/colors";
 import BottomNavigation from "../components/BottomNavigation";
@@ -26,38 +28,109 @@ import BottomNavigation from "../components/BottomNavigation";
 import { getPets } from "../services/petService";
 
 import {
-  getPetHistory,
+  createRoutine,
+  deleteRoutine,
+  getRoutinesByPet,
+  RoutineResponse,
   RoutineType,
-  VaccineStatus,
-} from "../services/historyService";
+  updateRoutine,
+} from "../services/routineService";
+
+import { getPetHistory } from "../services/historyService";
 
 import { useAuth } from "../contexts/AuthContext";
 
-type FilterType =
-  | "ALL"
-  | "VACCINES"
-  | "ROUTINES"
-  | "ALERTS";
+type ScreenTab = "CARE" | "HISTORY";
 
-type TimelineItem = {
-  id: string;
-  category: "VACCINE" | "ROUTINE" | "ALERT";
-  title: string;
-  description: string;
-  date: string | null;
-  status?: VaccineStatus;
-};
+const routineOptions: {
+  label: string;
+  value: RoutineType;
+  icon: keyof typeof Ionicons.glyphMap;
+}[] = [
+  {
+    label: "Passeio",
+    value: "WALK",
+    icon: "walk-outline",
+  },
+  {
+    label: "Alimentação",
+    value: "FEEDING",
+    icon: "restaurant-outline",
+  },
+  {
+    label: "Medicamento",
+    value: "MEDICATION",
+    icon: "medical-outline",
+  },
+  {
+    label: "Banho",
+    value: "BATHING",
+    icon: "water-outline",
+  },
+  {
+    label: "Higiene",
+    value: "GROOMING",
+    icon: "sparkles-outline",
+  },
+  {
+    label: "Veterinário",
+    value: "VET_VISIT",
+    icon: "medkit-outline",
+  },
+  {
+    label: "Treinamento",
+    value: "TRAINING",
+    icon: "school-outline",
+  },
+  {
+    label: "Outro",
+    value: "OTHER",
+    icon: "ellipsis-horizontal-outline",
+  },
+];
+
+function getToday() {
+  const today = new Date();
+
+  const year = today.getFullYear();
+  const month = String(
+    today.getMonth() + 1
+  ).padStart(2, "0");
+
+  const day = String(
+    today.getDate()
+  ).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
 
 export default function HistoryScreen({
   navigation,
 }: any) {
   const { session } = useAuth();
 
+  const queryClient = useQueryClient();
+
+  const [tab, setTab] =
+    useState<ScreenTab>("CARE");
+
   const [selectedPetId, setSelectedPetId] =
     useState<number | null>(null);
 
-  const [filter, setFilter] =
-    useState<FilterType>("ALL");
+  const [editingRoutine, setEditingRoutine] =
+    useState<RoutineResponse | null>(null);
+
+  const [routineType, setRoutineType] =
+    useState<RoutineType>("WALK");
+
+  const [description, setDescription] =
+    useState("");
+
+  const [recordDate, setRecordDate] =
+    useState(getToday());
+
+  const [formError, setFormError] =
+    useState("");
 
   const {
     data: pets = [],
@@ -82,10 +155,29 @@ export default function HistoryScreen({
   }, [pets, selectedPetId]);
 
   const {
+    data: routines = [],
+    isLoading: routinesLoading,
+    isError: routinesError,
+    refetch: refetchRoutines,
+  } = useQuery({
+    queryKey: [
+      "routines",
+      selectedPetId,
+    ],
+
+    queryFn: () =>
+      getRoutinesByPet(selectedPetId!),
+
+    enabled:
+      session?.role === "TUTOR" &&
+      selectedPetId !== null,
+  });
+
+  const {
     data: history,
     isLoading: historyLoading,
-    isError,
-    refetch,
+    isError: historyError,
+    refetch: refetchHistory,
   } = useQuery({
     queryKey: [
       "pet-history",
@@ -97,47 +189,241 @@ export default function HistoryScreen({
 
     enabled:
       session?.role === "TUTOR" &&
-      selectedPetId !== null,
+      selectedPetId !== null &&
+      tab === "HISTORY",
   });
 
-  function getRoutineName(type: RoutineType) {
-    const names: Record<RoutineType, string> = {
-      WALK: "Passeio",
-      FEEDING: "Alimentação",
-      MEDICATION: "Medicamento",
-      BATHING: "Banho",
-      GROOMING: "Higiene",
-      VET_VISIT: "Consulta veterinária",
-      TRAINING: "Treinamento",
-      OTHER: "Outro cuidado",
-    };
+  const createMutation = useMutation({
+    mutationFn: createRoutine,
 
-    return names[type];
+    onSuccess: async () => {
+      await refreshData();
+
+      clearForm();
+
+      Alert.alert(
+        "Cuidado registrado",
+        "O cuidado foi salvo no histórico do pet."
+      );
+    },
+
+    onError: (error: Error) => {
+      setFormError(error.message);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: {
+        petId: number;
+        type: RoutineType;
+        description?: string;
+        recordDate: string;
+      };
+    }) => updateRoutine(id, data),
+
+    onSuccess: async () => {
+      await refreshData();
+
+      clearForm();
+
+      Alert.alert(
+        "Cuidado atualizado",
+        "As informações foram atualizadas."
+      );
+    },
+
+    onError: (error: Error) => {
+      setFormError(error.message);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteRoutine,
+
+    onSuccess: async () => {
+      await refreshData();
+    },
+
+    onError: (error: Error) => {
+      Alert.alert(
+        "Erro ao excluir",
+        error.message
+      );
+    },
+  });
+
+  async function refreshData() {
+    await queryClient.invalidateQueries({
+      queryKey: [
+        "routines",
+        selectedPetId,
+      ],
+    });
+
+    await queryClient.invalidateQueries({
+      queryKey: [
+        "pet-history",
+        selectedPetId,
+      ],
+    });
   }
 
-  function getVaccineStatus(
-    status: VaccineStatus
+  function clearForm() {
+    setEditingRoutine(null);
+    setRoutineType("WALK");
+    setDescription("");
+    setRecordDate(getToday());
+    setFormError("");
+  }
+
+  function startEditing(
+    routine: RoutineResponse
   ) {
-    const labels: Record<
-      VaccineStatus,
-      string
-    > = {
-      PENDING: "Pendente",
-      APPLIED: "Aplicada",
-      EXPIRING_SOON:
-        "Próxima do vencimento",
-      OVERDUE: "Vencida",
-    };
-
-    return labels[status];
+    setEditingRoutine(routine);
+    setRoutineType(routine.type);
+    setDescription(
+      routine.description || ""
+    );
+    setRecordDate(routine.recordDate);
+    setFormError("");
   }
 
-  function formatDate(date: string | null) {
-    if (!date) {
-      return "";
+  function validateDate(date: string) {
+    const pattern =
+      /^\d{4}-\d{2}-\d{2}$/;
+
+    if (!pattern.test(date)) {
+      return false;
     }
 
-    const dateOnly = date.split("T")[0];
+    const parsed = new Date(
+      `${date}T00:00:00`
+    );
+
+    if (
+      Number.isNaN(parsed.getTime())
+    ) {
+      return false;
+    }
+
+    const today = new Date();
+
+    today.setHours(23, 59, 59, 999);
+
+    return parsed <= today;
+  }
+
+  function handleSave() {
+    setFormError("");
+
+    if (!selectedPetId) {
+      setFormError(
+        "Selecione um pet."
+      );
+      return;
+    }
+
+    if (!recordDate) {
+      setFormError(
+        "Informe a data do cuidado."
+      );
+      return;
+    }
+
+    if (!validateDate(recordDate)) {
+      setFormError(
+        "Informe uma data válida no formato AAAA-MM-DD. A data não pode estar no futuro."
+      );
+
+      return;
+    }
+
+    if (description.length > 500) {
+      setFormError(
+        "A descrição deve possuir no máximo 500 caracteres."
+      );
+
+      return;
+    }
+
+    const data = {
+      petId: selectedPetId,
+      type: routineType,
+
+      description:
+        description.trim()
+          ? description.trim()
+          : undefined,
+
+      recordDate,
+    };
+
+    if (editingRoutine) {
+      updateMutation.mutate({
+        id: editingRoutine.id,
+        data,
+      });
+
+      return;
+    }
+
+    createMutation.mutate(data);
+  }
+
+  function handleDelete(
+    routine: RoutineResponse
+  ) {
+    Alert.alert(
+      "Excluir cuidado",
+      "Deseja realmente remover este registro?",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Excluir",
+          style: "destructive",
+
+          onPress: () =>
+            deleteMutation.mutate(
+              routine.id
+            ),
+        },
+      ]
+    );
+  }
+
+  function getRoutineLabel(
+    type: RoutineType
+  ) {
+    return (
+      routineOptions.find(
+        (option) =>
+          option.value === type
+      )?.label || "Cuidado"
+    );
+  }
+
+  function getRoutineIcon(
+    type: RoutineType
+  ) {
+    return (
+      routineOptions.find(
+        (option) =>
+          option.value === type
+      )?.icon || "heart-outline"
+    );
+  }
+
+  function formatDate(date: string) {
+    const dateOnly =
+      date.split("T")[0];
 
     const [year, month, day] =
       dateOnly.split("-");
@@ -150,114 +436,87 @@ export default function HistoryScreen({
       return [];
     }
 
-    const items: TimelineItem[] = [];
+    const items: {
+      id: string;
+      type:
+        | "VACCINE"
+        | "ROUTINE"
+        | "ALERT";
+      title: string;
+      description: string;
+      date: string;
+    }[] = [];
 
-    if (
-      filter === "ALL" ||
-      filter === "VACCINES"
-    ) {
-      history.vaccines.forEach(
-        (vaccine) => {
-          items.push({
-            id: `vaccine-${vaccine.id}`,
-            category: "VACCINE",
-            title: `Vacina ${vaccine.name}`,
-            description:
-              getVaccineStatus(
-                vaccine.status
-              ),
-            date:
-              vaccine.applicationDate ||
-              vaccine.dueDate,
-            status: vaccine.status,
-          });
-        }
-      );
-    }
+    history.vaccines.forEach(
+      (vaccine) => {
+        items.push({
+          id: `vaccine-${vaccine.id}`,
+          type: "VACCINE",
+          title: `Vacina ${vaccine.name}`,
+          description:
+            vaccine.status,
+          date:
+            vaccine.applicationDate ||
+            vaccine.dueDate ||
+            "",
+        });
+      }
+    );
 
-    if (
-      filter === "ALL" ||
-      filter === "ROUTINES"
-    ) {
-      history.routines.forEach(
-        (routine) => {
-          items.push({
-            id: `routine-${routine.id}`,
-            category: "ROUTINE",
-            title: getRoutineName(
-              routine.type
-            ),
-            description:
-              routine.description ||
-              "Rotina registrada",
-            date: routine.recordDate,
-          });
-        }
-      );
-    }
+    history.routines.forEach(
+      (routine) => {
+        items.push({
+          id: `routine-${routine.id}`,
+          type: "ROUTINE",
+          title: getRoutineLabel(
+            routine.type
+          ),
+          description:
+            routine.description ||
+            "Cuidado registrado",
+          date: routine.recordDate,
+        });
+      }
+    );
 
-    if (
-      filter === "ALL" ||
-      filter === "ALERTS"
-    ) {
-      history.alerts.forEach(
-        (alert) => {
-          items.push({
-            id: `alert-${alert.id}`,
-            category: "ALERT",
-            title:
-              "Aviso da clínica veterinária",
-            description:
-              alert.message,
-            date:
-              alert.dueDate ||
-              alert.createdAt,
-          });
-        }
-      );
-    }
+    history.alerts.forEach(
+      (alert) => {
+        items.push({
+          id: `alert-${alert.id}`,
+          type: "ALERT",
+          title:
+            "Aviso da clínica veterinária",
+          description:
+            alert.message,
+          date:
+            alert.dueDate ||
+            alert.createdAt,
+        });
+      }
+    );
 
-    return items.sort((a, b) => {
-      const dateA = a.date
-        ? new Date(a.date).getTime()
-        : 0;
-
-      const dateB = b.date
-        ? new Date(b.date).getTime()
-        : 0;
-
-      return dateB - dateA;
-    });
-  }, [history, filter]);
-
-  function getIcon(item: TimelineItem) {
-    if (item.category === "VACCINE") {
-      return "medical";
-    }
-
-    if (item.category === "ALERT") {
-      return "notifications";
-    }
-
-    return "calendar";
-  }
+    return items.sort(
+      (a, b) =>
+        new Date(b.date).getTime() -
+        new Date(a.date).getTime()
+    );
+  }, [history]);
 
   if (session?.role !== "TUTOR") {
     return (
-      <View style={styles.center}>
+      <View style={styles.restricted}>
         <Ionicons
           name="lock-closed-outline"
-          size={54}
+          size={56}
           color={colors.teal}
         />
 
-        <Text style={styles.centerTitle}>
-          Histórico do Tutor
+        <Text style={styles.restrictedTitle}>
+          Área do Tutor
         </Text>
 
-        <Text style={styles.centerText}>
-          Esta área é destinada ao
-          acompanhamento dos pets pelo tutor.
+        <Text style={styles.restrictedText}>
+          Os cuidados são registrados pelo tutor responsável pelo pet.
         </Text>
       </View>
     );
@@ -270,15 +529,79 @@ export default function HistoryScreen({
         contentContainerStyle={
           styles.content
         }
+        keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.title}>
-          Histórico
+          Cuidados
         </Text>
 
         <Text style={styles.subtitle}>
-          Acompanhe vacinas, rotinas e
-          alertas dos seus pets.
+          Registre a rotina e acompanhe o histórico de saúde dos seus pets.
         </Text>
+
+        <View style={styles.tabs}>
+          <TouchableOpacity
+            style={[
+              styles.tab,
+              tab === "CARE" &&
+                styles.tabSelected,
+            ]}
+            onPress={() =>
+              setTab("CARE")
+            }
+          >
+            <Ionicons
+              name="heart-outline"
+              size={18}
+              color={
+                tab === "CARE"
+                  ? colors.primary
+                  : colors.white
+              }
+            />
+
+            <Text
+              style={[
+                styles.tabText,
+                tab === "CARE" &&
+                  styles.tabTextSelected,
+              ]}
+            >
+              Cuidados
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.tab,
+              tab === "HISTORY" &&
+                styles.tabSelected,
+            ]}
+            onPress={() =>
+              setTab("HISTORY")
+            }
+          >
+            <Ionicons
+              name="time-outline"
+              size={18}
+              color={
+                tab === "HISTORY"
+                  ? colors.primary
+                  : colors.white
+              }
+            />
+
+            <Text
+              style={[
+                styles.tabText,
+                tab === "HISTORY" &&
+                  styles.tabTextSelected,
+              ]}
+            >
+              Histórico
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         {petsLoading ? (
           <ActivityIndicator
@@ -296,15 +619,10 @@ export default function HistoryScreen({
             <Text style={styles.emptyTitle}>
               Nenhum pet cadastrado
             </Text>
-
-            <Text style={styles.emptyText}>
-              Cadastre um pet para começar
-              a construir o histórico.
-            </Text>
           </View>
         ) : (
           <>
-            <Text style={styles.sectionLabel}>
+            <Text style={styles.labelWhite}>
               Selecione o pet
             </Text>
 
@@ -317,7 +635,8 @@ export default function HistoryScreen({
             >
               {pets.map((pet) => {
                 const selected =
-                  pet.id === selectedPetId;
+                  pet.id ===
+                  selectedPetId;
 
                 return (
                   <TouchableOpacity
@@ -327,11 +646,13 @@ export default function HistoryScreen({
                       selected &&
                         styles.petButtonSelected,
                     ]}
-                    onPress={() =>
+                    onPress={() => {
                       setSelectedPetId(
                         pet.id
-                      )
-                    }
+                      );
+
+                      clearForm();
+                    }}
                   >
                     <MaterialIcons
                       name="pets"
@@ -344,11 +665,9 @@ export default function HistoryScreen({
                     />
 
                     <Text
-                      style={[
-                        styles.petButtonText,
-                        selected &&
-                          styles.petButtonTextSelected,
-                      ]}
+                      style={
+                        styles.petButtonText
+                      }
                     >
                       {pet.name}
                     </Text>
@@ -357,89 +676,352 @@ export default function HistoryScreen({
               })}
             </ScrollView>
 
-            <View style={styles.filters}>
-              {[
-                ["ALL", "Todos"],
-                ["VACCINES", "Vacinas"],
-                ["ROUTINES", "Rotinas"],
-                ["ALERTS", "Alertas"],
-              ].map(([value, label]) => (
-                <TouchableOpacity
-                  key={value}
-                  style={[
-                    styles.filterButton,
-                    filter === value &&
-                      styles.filterButtonSelected,
-                  ]}
-                  onPress={() =>
-                    setFilter(
-                      value as FilterType
-                    )
-                  }
-                >
-                  <Text
-                    style={[
-                      styles.filterText,
-                      filter === value &&
-                        styles.filterTextSelected,
-                    ]}
-                  >
-                    {label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {historyLoading ? (
-              <View style={styles.loadingBox}>
-                <ActivityIndicator
-                  size="large"
-                  color={colors.teal}
-                />
-
-                <Text
-                  style={
-                    styles.loadingText
-                  }
-                >
-                  Carregando histórico...
-                </Text>
-              </View>
-            ) : isError ? (
-              <View style={styles.emptyCard}>
-                <Ionicons
-                  name="alert-circle-outline"
-                  size={42}
-                  color={colors.teal}
-                />
-
-                <Text
-                  style={styles.emptyTitle}
-                >
-                  Não foi possível carregar
-                  o histórico
-                </Text>
-
-                <TouchableOpacity
-                  style={styles.retryButton}
-                  onPress={() =>
-                    refetch()
-                  }
+            {tab === "CARE" ? (
+              <>
+                <View
+                  style={styles.formCard}
                 >
                   <Text
                     style={
-                      styles.retryText
+                      styles.formTitle
                     }
                   >
-                    Tentar novamente
+                    {editingRoutine
+                      ? "Editar cuidado"
+                      : "Registrar cuidado"}
                   </Text>
-                </TouchableOpacity>
-              </View>
+
+                  <Text
+                    style={styles.label}
+                  >
+                    Tipo de cuidado
+                  </Text>
+
+                  <View
+                    style={
+                      styles.typesContainer
+                    }
+                  >
+                    {routineOptions.map(
+                      (option) => {
+                        const selected =
+                          routineType ===
+                          option.value;
+
+                        return (
+                          <TouchableOpacity
+                            key={
+                              option.value
+                            }
+                            style={[
+                              styles.typeButton,
+                              selected &&
+                                styles.typeButtonSelected,
+                            ]}
+                            onPress={() =>
+                              setRoutineType(
+                                option.value
+                              )
+                            }
+                          >
+                            <Ionicons
+                              name={
+                                option.icon
+                              }
+                              size={19}
+                              color={
+                                selected
+                                  ? colors.primary
+                                  : colors.teal
+                              }
+                            />
+
+                            <Text
+                              style={
+                                styles.typeText
+                              }
+                            >
+                              {
+                                option.label
+                              }
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      }
+                    )}
+                  </View>
+
+                  <Text
+                    style={styles.label}
+                  >
+                    Descrição
+                  </Text>
+
+                  <TextInput
+                    style={[
+                      styles.input,
+                      styles.descriptionInput,
+                    ]}
+                    placeholder="Ex: Passeio de 30 minutos no parque"
+                    placeholderTextColor={
+                      colors.gray
+                    }
+                    multiline
+                    maxLength={500}
+                    value={description}
+                    onChangeText={
+                      setDescription
+                    }
+                  />
+
+                  <Text
+                    style={styles.label}
+                  >
+                    Data
+                  </Text>
+
+                  <TextInput
+                    style={styles.input}
+                    placeholder="AAAA-MM-DD"
+                    placeholderTextColor={
+                      colors.gray
+                    }
+                    value={recordDate}
+                    onChangeText={
+                      setRecordDate
+                    }
+                  />
+
+                  {formError ? (
+                    <Text
+                      style={
+                        styles.formError
+                      }
+                    >
+                      {formError}
+                    </Text>
+                  ) : null}
+
+                  <TouchableOpacity
+                    style={
+                      styles.saveButton
+                    }
+                    onPress={handleSave}
+                    disabled={
+                      createMutation.isPending ||
+                      updateMutation.isPending
+                    }
+                  >
+                    {createMutation.isPending ||
+                    updateMutation.isPending ? (
+                      <ActivityIndicator
+                        color={
+                          colors.primary
+                        }
+                      />
+                    ) : (
+                      <Text
+                        style={
+                          styles.saveButtonText
+                        }
+                      >
+                        {editingRoutine
+                          ? "Salvar alterações"
+                          : "Registrar cuidado"}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+
+                  {editingRoutine && (
+                    <TouchableOpacity
+                      style={
+                        styles.cancelButton
+                      }
+                      onPress={clearForm}
+                    >
+                      <Text
+                        style={
+                          styles.cancelText
+                        }
+                      >
+                        Cancelar edição
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                <Text
+                  style={
+                    styles.sectionTitle
+                  }
+                >
+                  Cuidados registrados
+                </Text>
+
+                {routinesLoading ? (
+                  <ActivityIndicator
+                    color={colors.teal}
+                  />
+                ) : routinesError ? (
+                  <TouchableOpacity
+                    onPress={() =>
+                      refetchRoutines()
+                    }
+                  >
+                    <Text
+                      style={
+                        styles.errorText
+                      }
+                    >
+                      Erro ao carregar. Toque para tentar novamente.
+                    </Text>
+                  </TouchableOpacity>
+                ) : routines.length ===
+                  0 ? (
+                  <View
+                    style={
+                      styles.emptyCard
+                    }
+                  >
+                    <Ionicons
+                      name="heart-outline"
+                      size={38}
+                      color={colors.teal}
+                    />
+
+                    <Text
+                      style={
+                        styles.emptyTitle
+                      }
+                    >
+                      Nenhum cuidado registrado
+                    </Text>
+                  </View>
+                ) : (
+                  routines.map(
+                    (routine) => (
+                      <View
+                        key={routine.id}
+                        style={
+                          styles.routineCard
+                        }
+                      >
+                        <View
+                          style={
+                            styles.routineIcon
+                          }
+                        >
+                          <Ionicons
+                            name={
+                              getRoutineIcon(
+                                routine.type
+                              )
+                            }
+                            size={23}
+                            color={
+                              colors.white
+                            }
+                          />
+                        </View>
+
+                        <View
+                          style={
+                            styles.routineContent
+                          }
+                        >
+                          <Text
+                            style={
+                              styles.routineTitle
+                            }
+                          >
+                            {getRoutineLabel(
+                              routine.type
+                            )}
+                          </Text>
+
+                          {routine.description ? (
+                            <Text
+                              style={
+                                styles.routineDescription
+                              }
+                            >
+                              {
+                                routine.description
+                              }
+                            </Text>
+                          ) : null}
+
+                          <Text
+                            style={
+                              styles.routineDate
+                            }
+                          >
+                            {formatDate(
+                              routine.recordDate
+                            )}
+                          </Text>
+                        </View>
+
+                        <TouchableOpacity
+                          onPress={() =>
+                            startEditing(
+                              routine
+                            )
+                          }
+                        >
+                          <Ionicons
+                            name="create-outline"
+                            size={22}
+                            color={
+                              colors.teal
+                            }
+                          />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          onPress={() =>
+                            handleDelete(
+                              routine
+                            )
+                          }
+                        >
+                          <Ionicons
+                            name="trash-outline"
+                            size={22}
+                            color={
+                              colors.danger
+                            }
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    )
+                  )
+                )}
+              </>
+            ) : historyLoading ? (
+              <ActivityIndicator
+                size="large"
+                color={colors.teal}
+              />
+            ) : historyError ? (
+              <TouchableOpacity
+                onPress={() =>
+                  refetchHistory()
+                }
+              >
+                <Text
+                  style={styles.errorText}
+                >
+                  Não foi possível carregar o histórico.
+                </Text>
+              </TouchableOpacity>
             ) : timeline.length === 0 ? (
-              <View style={styles.emptyCard}>
+              <View
+                style={styles.emptyCard}
+              >
                 <Ionicons
                   name="time-outline"
-                  size={42}
+                  size={40}
                   color={colors.teal}
                 />
 
@@ -448,109 +1030,66 @@ export default function HistoryScreen({
                 >
                   Histórico vazio
                 </Text>
-
-                <Text
-                  style={styles.emptyText}
-                >
-                  Ainda não existem registros
-                  nesta categoria.
-                </Text>
               </View>
             ) : (
-              <View style={styles.timeline}>
-                {timeline.map(
-                  (item, index) => (
-                    <View
-                      key={item.id}
+              timeline.map((item) => (
+                <View
+                  key={item.id}
+                  style={
+                    styles.historyCard
+                  }
+                >
+                  <View
+                    style={
+                      styles.historyIcon
+                    }
+                  >
+                    <Ionicons
+                      name={
+                        item.type ===
+                        "VACCINE"
+                          ? "medical"
+                          : item.type ===
+                            "ALERT"
+                          ? "notifications"
+                          : "heart"
+                      }
+                      size={22}
+                      color={colors.white}
+                    />
+                  </View>
+
+                  <View style={{ flex: 1 }}>
+                    <Text
                       style={
-                        styles.timelineRow
+                        styles.historyTitle
                       }
                     >
-                      <View
+                      {item.title}
+                    </Text>
+
+                    <Text
+                      style={
+                        styles.historyText
+                      }
+                    >
+                      {item.description}
+                    </Text>
+
+                    {item.date ? (
+                      <Text
                         style={
-                          styles.timelineLeft
+                          styles.historyDate
                         }
                       >
-                        <View
-                          style={
-                            styles.timelineIcon
-                          }
-                        >
-                          <Ionicons
-                            name={
-                              getIcon(
-                                item
-                              ) as any
-                            }
-                            size={21}
-                            color={
-                              colors.white
-                            }
-                          />
-                        </View>
-
-                        {index <
-                          timeline.length -
-                            1 && (
-                          <View
-                            style={
-                              styles.timelineLine
-                            }
-                          />
+                        {formatDate(
+                          item.date
                         )}
-                      </View>
-
-                      <View
-                        style={
-                          styles.eventCard
-                        }
-                      >
-                        <Text
-                          style={
-                            styles.eventTitle
-                          }
-                        >
-                          {item.title}
-                        </Text>
-
-                        <Text
-                          style={
-                            styles.eventDescription
-                          }
-                        >
-                          {item.description}
-                        </Text>
-
-                        {item.date && (
-                          <View
-                            style={
-                              styles.dateRow
-                            }
-                          >
-                            <Ionicons
-                              name="calendar-outline"
-                              size={14}
-                              color={
-                                colors.gray
-                              }
-                            />
-
-                            <Text
-                              style={
-                                styles.eventDate
-                              }
-                            >
-                              {formatDate(
-                                item.date
-                              )}
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                    </View>
-                  )
-                )}
-              </View>
+                      </Text>
+                    ) : null}
+                  </View>
+                </View>
+              ))
             )}
           </>
         )}
@@ -586,13 +1125,44 @@ const styles = StyleSheet.create({
     color: colors.mint,
     fontSize: 14,
     marginTop: 6,
-    marginBottom: 24,
+    marginBottom: 20,
   },
 
-  sectionLabel: {
+  tabs: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 22,
+  },
+
+  tab: {
+    flex: 1,
+    borderRadius: 14,
+    padding: 13,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor:
+      "rgba(255,255,255,0.12)",
+  },
+
+  tabSelected: {
+    backgroundColor: colors.teal,
+  },
+
+  tabText: {
     color: colors.white,
-    fontWeight: "700",
+    fontWeight: "800",
+  },
+
+  tabTextSelected: {
+    color: colors.primary,
+  },
+
+  labelWhite: {
+    color: colors.white,
     fontSize: 14,
+    fontWeight: "700",
     marginBottom: 10,
   },
 
@@ -603,12 +1173,11 @@ const styles = StyleSheet.create({
   petButton: {
     backgroundColor: colors.white,
     borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
+    padding: 12,
     marginRight: 10,
     flexDirection: "row",
-    alignItems: "center",
     gap: 7,
+    alignItems: "center",
   },
 
   petButtonSelected: {
@@ -620,155 +1189,206 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
-  petButtonTextSelected: {
+  formCard: {
+    backgroundColor: colors.white,
+    padding: 20,
+    borderRadius: 22,
+  },
+
+  formTitle: {
     color: colors.primary,
+    fontSize: 21,
+    fontWeight: "800",
+    marginBottom: 18,
   },
 
-  filters: {
+  label: {
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: "700",
+    marginBottom: 7,
+  },
+
+  typesContainer: {
     flexDirection: "row",
-    gap: 7,
-    marginBottom: 22,
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 18,
   },
 
-  filterButton: {
-    flex: 1,
-    backgroundColor:
-      "rgba(255,255,255,0.12)",
+  typeButton: {
+    backgroundColor: "#F4F4F4",
     borderRadius: 12,
-    paddingVertical: 10,
+    paddingHorizontal: 11,
+    paddingVertical: 9,
+    flexDirection: "row",
     alignItems: "center",
+    gap: 5,
   },
 
-  filterButtonSelected: {
-    backgroundColor: colors.teal,
+  typeButtonSelected: {
+    backgroundColor: colors.mint,
   },
 
-  filterText: {
-    color: colors.white,
-    fontSize: 11,
+  typeText: {
+    color: colors.primary,
+    fontSize: 12,
     fontWeight: "700",
   },
 
-  filterTextSelected: {
+  input: {
+    backgroundColor: "#F5F5F5",
+    borderRadius: 14,
+    paddingHorizontal: 15,
+    paddingVertical: 13,
     color: colors.primary,
+    marginBottom: 15,
   },
 
-  timeline: {
-    marginTop: 4,
+  descriptionInput: {
+    minHeight: 90,
+    textAlignVertical: "top",
   },
 
-  timelineRow: {
-    flexDirection: "row",
-    minHeight: 105,
+  formError: {
+    color: "#C62828",
+    marginBottom: 10,
   },
 
-  timelineLeft: {
-    width: 44,
-    alignItems: "center",
-  },
-
-  timelineIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+  saveButton: {
     backgroundColor: colors.teal,
+    borderRadius: 15,
+    padding: 15,
     alignItems: "center",
-    justifyContent: "center",
-    zIndex: 2,
   },
 
-  timelineLine: {
-    position: "absolute",
-    top: 38,
-    bottom: 0,
-    width: 2,
-    backgroundColor:
-      "rgba(255,255,255,0.25)",
+  saveButtonText: {
+    color: colors.primary,
+    fontWeight: "800",
   },
 
-  eventCard: {
-    flex: 1,
-    backgroundColor: colors.white,
-    borderRadius: 18,
-    padding: 16,
-    marginLeft: 10,
+  cancelButton: {
+    borderWidth: 1,
+    borderColor: colors.gray,
+    borderRadius: 15,
+    padding: 13,
+    alignItems: "center",
+    marginTop: 9,
+  },
+
+  cancelText: {
+    color: colors.primary,
+    fontWeight: "700",
+  },
+
+  sectionTitle: {
+    color: colors.white,
+    fontSize: 20,
+    fontWeight: "800",
+    marginTop: 26,
     marginBottom: 14,
   },
 
-  eventTitle: {
+  routineCard: {
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+
+  routineIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: colors.teal,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  routineContent: {
+    flex: 1,
+  },
+
+  routineTitle: {
     color: colors.primary,
     fontSize: 16,
     fontWeight: "800",
   },
 
-  eventDescription: {
+  routineDescription: {
     color: colors.gray,
     fontSize: 13,
-    lineHeight: 18,
+    marginTop: 3,
+  },
+
+  routineDate: {
+    color: colors.teal,
+    fontSize: 12,
+    fontWeight: "700",
     marginTop: 5,
   },
 
-  dateRow: {
+  historyCard: {
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 12,
     flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    marginTop: 9,
+    gap: 12,
   },
 
-  eventDate: {
+  historyIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.teal,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  historyTitle: {
+    color: colors.primary,
+    fontSize: 15,
+    fontWeight: "800",
+  },
+
+  historyText: {
     color: colors.gray,
+    fontSize: 13,
+    marginTop: 4,
+  },
+
+  historyDate: {
+    color: colors.teal,
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "700",
+    marginTop: 7,
   },
 
   emptyCard: {
     backgroundColor: colors.white,
     borderRadius: 20,
-    padding: 26,
+    padding: 25,
     alignItems: "center",
-    marginTop: 10,
   },
 
   emptyTitle: {
     color: colors.primary,
-    fontSize: 18,
     fontWeight: "800",
-    marginTop: 12,
-    textAlign: "center",
+    fontSize: 17,
+    marginTop: 10,
   },
 
-  emptyText: {
-    color: colors.gray,
-    textAlign: "center",
-    fontSize: 13,
-    lineHeight: 19,
-    marginTop: 7,
-  },
-
-  loadingBox: {
-    padding: 35,
-    alignItems: "center",
-  },
-
-  loadingText: {
+  errorText: {
     color: colors.white,
-    marginTop: 12,
+    textAlign: "center",
+    padding: 20,
   },
 
-  retryButton: {
-    backgroundColor: colors.teal,
-    paddingVertical: 11,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    marginTop: 14,
-  },
-
-  retryText: {
-    color: colors.primary,
-    fontWeight: "800",
-  },
-
-  center: {
+  restricted: {
     flex: 1,
     backgroundColor: colors.primary,
     alignItems: "center",
@@ -776,14 +1396,14 @@ const styles = StyleSheet.create({
     padding: 30,
   },
 
-  centerTitle: {
+  restrictedTitle: {
     color: colors.white,
     fontSize: 24,
     fontWeight: "800",
-    marginTop: 15,
+    marginTop: 14,
   },
 
-  centerText: {
+  restrictedText: {
     color: colors.mint,
     textAlign: "center",
     marginTop: 8,

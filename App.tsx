@@ -21,6 +21,7 @@ import PetRegisterScreen from "./src/screens/PetRegisterScreen";
 import PetDetailsScreen from "./src/screens/PetDetailsScreen";
 import HistoryScreen from "./src/screens/HistoryScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
+import VaccinesScreen from "./src/screens/VaccinesScreen";
 
 import { RootStackParamList } from "./src/types/navigation";
 
@@ -99,6 +100,11 @@ function AppNavigator() {
             <Stack.Screen
               name="Profile"
               component={ProfileScreen}
+            />
+
+            <Stack.Screen
+              name="Vaccines"
+              component={VaccinesScreen}
             />
           </>
         )}
