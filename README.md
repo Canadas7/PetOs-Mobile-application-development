@@ -1,7 +1,7 @@
 # PetOS
 
 Vídeo de apresentação:  
-https://youtube.com/shorts/3k8P1Fca4cI?si=Ib036zEHVZC59WaG
+[https://youtube.com/shorts/3k8P1Fca4cI?si=Ib036zEHVZC59WaG](https://www.youtube.com/watch?is=h-qsFgHqqMRPVpt4&v=qPNdumC8XH8&feature=youtu.be)
 
 ## Sobre o Projeto
 
