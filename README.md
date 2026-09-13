@@ -1,359 +1,346 @@
-PetOS
+# PetOS
 
-Vídeo de apresentação:
+Vídeo de apresentação:  
 https://youtube.com/shorts/3k8P1Fca4cI?si=Ib036zEHVZC59WaG
 
-Sobre o Projeto
+## Sobre o Projeto
 
 O PetOS é uma plataforma digital de cuidado contínuo para pets, desenvolvida para centralizar informações de saúde, rotina e histórico dos animais em um único sistema.
 
-Nesta Sprint 3, o projeto deixou de funcionar apenas como um protótipo local e passou a consumir uma API REST real, com autenticação, persistência de sessão, integração entre perfis de usuário e operações completas de CRUD.
+Na Sprint 3, o projeto evoluiu de um protótipo mobile para uma aplicação integrada a uma API REST real, com autenticação, persistência de sessão, diferentes perfis de usuário e operações completas de CRUD.
 
 A solução possui dois perfis principais:
 
-Tutor, responsável pelo cadastro e gerenciamento dos próprios pets, registro de cuidados e acompanhamento do histórico;
+- Tutor
+- Clínica Veterinária
 
-Clínica Veterinária, responsável pela consulta dos pets cadastrados e gerenciamento das vacinas.
+O Tutor pode gerenciar seus pets, registrar cuidados, acompanhar vacinas, consultar o histórico e visualizar alertas.
 
-O objetivo é facilitar a organização das informações dos animais e melhorar a comunicação entre tutor e clínica dentro de uma única aplicação.
+A Clínica Veterinária pode consultar os pets cadastrados e realizar o gerenciamento das vacinas.
 
-Objetivo da Solução
+---
 
-O PetOS busca resolver problemas comuns no acompanhamento da saúde e rotina dos pets, como:
+# Objetivo da Solução
 
-dificuldade em organizar informações dos animais;
+O PetOS busca facilitar o acompanhamento da saúde e da rotina dos animais, centralizando informações importantes dentro de uma única aplicação.
 
-esquecimento ou falta de acompanhamento de vacinas;
+O projeto busca resolver problemas como:
 
-perda de histórico de cuidados;
+- dificuldade na organização das informações dos pets
+- falta de acompanhamento das vacinas
+- perda do histórico de cuidados
+- dificuldade de comunicação entre tutor e clínica
+- falta de organização da rotina dos animais
 
-falta de centralização das informações entre tutor e clínica;
+Nesta Sprint foram implementados:
 
-dificuldade em acompanhar rotinas realizadas com o pet.
+- autenticação real
+- cadastro de usuários
+- persistência de sessão
+- perfis Tutor e Clínica
+- CRUD completo de Pets
+- CRUD completo de Vacinas
+- CRUD de Cuidados
+- histórico do pet
+- alertas
+- integração com API REST
+- TanStack Query
+- hooks personalizados
 
-Nesta Sprint 3, a aplicação passou a oferecer:
+---
 
-autenticação real;
+# Tecnologias Utilizadas
 
-cadastro de usuários;
+## Desenvolvimento Mobile
 
-controle de sessão;
+- React Native
+- Expo
+- TypeScript
 
-perfis com permissões diferentes;
+## Navegação
 
-CRUD completo de pets;
+- React Navigation
+- Native Stack Navigation
 
-CRUD completo de vacinas;
+## Gerenciamento de Dados
 
-CRUD de cuidados e rotinas;
+- TanStack Query
+- Fetch API
 
-histórico do pet;
+## Persistência
 
-alertas;
+- AsyncStorage
 
-integração real entre aplicativo mobile e backend.
+## Autenticação
 
-Tecnologias Utilizadas
+- JWT
 
-Desenvolvimento Mobile
+## Interface
 
-React Native
+- Expo Vector Icons
+- StyleSheet API
 
-Expo
+## Backend
 
-TypeScript
+- Java
+- Spring Boot
+- Spring Security
+- API REST
 
-Navegação
+---
 
-React Navigation
-
-Native Stack Navigation
-
-Comunicação com API
-
-API REST
-
-Fetch
-
-TanStack Query
-
-Autenticação
-
-JWT
-
-AsyncStorage para persistência da sessão
-
-Componentes Visuais
-
-Expo Vector Icons
-
-StyleSheet API
-
-Backend
-
-Java
-
-Spring Boot
-
-Spring Security
-
-JWT
-
-Funcionalidades Implementadas
-
-Autenticação
+# Autenticação
 
 O aplicativo possui autenticação real integrada ao backend.
 
-Foram implementados:
+Foram implementadas as seguintes funcionalidades:
 
-cadastro de usuário;
+- cadastro de usuário
+- login
+- autenticação com JWT
+- persistência da sessão
+- recuperação dos dados do usuário
+- rotas protegidas
+- logout
 
-login;
+Após realizar o login, a sessão permanece salva mesmo após fechar e abrir novamente o aplicativo.
 
-persistência da sessão;
+O AsyncStorage é utilizado para persistir os dados necessários da sessão.
 
-recuperação dos dados do usuário;
+---
 
-rotas protegidas;
+# Perfis de Usuário
 
-logout.
-
-Ao entrar no aplicativo, o usuário permanece autenticado mesmo após fechar e abrir novamente o app.
-
-Perfis de Usuário
-
-O PetOS possui dois perfis:
-
-Tutor
+## Tutor
 
 O Tutor pode:
 
-cadastrar pets;
+- cadastrar pets
+- visualizar seus pets
+- consultar detalhes dos pets
+- editar pets
+- excluir pets
+- visualizar vacinas
+- registrar cuidados
+- editar cuidados
+- excluir cuidados
+- consultar histórico
+- visualizar alertas
+- acessar o perfil
+- realizar logout
 
-visualizar seus pets;
+---
 
-editar informações dos pets;
-
-excluir pets;
-
-visualizar vacinas;
-
-registrar cuidados;
-
-editar cuidados;
-
-excluir cuidados;
-
-consultar histórico;
-
-visualizar alertas.
-
-Clínica Veterinária
+## Clínica Veterinária
 
 A Clínica pode:
 
-consultar os pets cadastrados;
+- consultar os pets cadastrados
+- visualizar detalhes dos pets
+- consultar os cuidados registrados pelos tutores
+- cadastrar vacinas
+- editar vacinas
+- excluir vacinas
+- acompanhar informações dos animais
+- acessar o perfil
+- realizar logout
 
-visualizar os detalhes dos pets;
+A Clínica não possui permissão para editar ou excluir os pets dos Tutores.
 
-consultar cuidados registrados pelo tutor;
+---
 
-cadastrar vacinas;
+# CRUD de Pets
 
-editar vacinas;
+Foi implementado um CRUD completo de Pets integrado à API.
 
-excluir vacinas.
+## Create
 
-Cada perfil possui permissões diferentes dentro da aplicação.
+O Tutor pode cadastrar um novo pet.
 
-CRUD de Pets
+## Read
 
-Foi implementado um CRUD completo de pets integrado à API.
+O Tutor e a Clínica podem consultar os pets cadastrados e acessar seus detalhes.
 
-O Tutor pode:
+## Update
 
-Create: cadastrar um novo pet;
+O Tutor pode alterar as informações de seus pets.
 
-Read: visualizar a lista e os detalhes do pet;
+## Delete
 
-Update: editar as informações cadastradas;
+O Tutor pode excluir seus pets.
 
-Delete: excluir o pet.
+As informações cadastradas incluem:
 
-Informações disponíveis:
+- nome
+- espécie
+- raça
+- data de nascimento
+- idade
+- peso
+- tutor responsável
+- telefone do tutor
 
-nome;
+---
 
-espécie;
+# CRUD de Vacinas
 
-raça;
-
-data de nascimento;
-
-idade;
-
-peso;
-
-tutor responsável;
-
-telefone do tutor.
-
-CRUD de Vacinas
-
-A Clínica Veterinária possui acesso ao gerenciamento de vacinas.
+A Clínica Veterinária possui acesso ao gerenciamento das vacinas.
 
 Foram implementadas as operações:
 
-cadastrar vacina;
+- cadastrar vacina
+- listar vacinas
+- editar vacina
+- excluir vacina
 
-listar vacinas;
+As vacinas podem apresentar diferentes status:
 
-editar vacina;
+- Pendente
+- Aplicada
+- Próxima do vencimento
+- Vencida
 
-excluir vacina.
+As informações cadastradas pela Clínica também podem ser visualizadas pelo Tutor.
 
-As vacinas podem apresentar diferentes status, como:
+---
 
-pendente;
-
-aplicada;
-
-próxima do vencimento;
-
-vencida.
-
-O Tutor consegue visualizar essas informações no aplicativo.
-
-Cuidados e Rotinas
+# Cuidados e Rotinas
 
 O Tutor pode registrar cuidados realizados com o pet.
 
-Entre os tipos disponíveis estão:
+Os tipos de cuidados disponíveis incluem:
 
-passeio;
-
-alimentação;
-
-medicamento;
-
-banho;
-
-higiene;
-
-consulta veterinária;
-
-treinamento;
-
-outros.
+- Passeio
+- Alimentação
+- Medicamento
+- Banho
+- Higiene
+- Consulta Veterinária
+- Treinamento
+- Outros
 
 Também foram implementadas as operações de:
 
-cadastro;
+- cadastro
+- consulta
+- edição
+- exclusão
 
-consulta;
+Os cuidados registrados ficam disponíveis no histórico do animal.
 
-edição;
+---
 
-exclusão.
-
-Essas informações ficam disponíveis no histórico do pet.
-
-Histórico do Pet
+# Histórico do Pet
 
 A aplicação possui uma área de histórico integrada ao backend.
 
 O histórico reúne informações relacionadas a:
 
-vacinas;
+- vacinas
+- cuidados
+- rotinas
+- alertas
 
-cuidados e rotinas;
+A tela de detalhes do pet também apresenta um resumo dessas informações.
 
-alertas.
+Dessa forma, Tutor e Clínica conseguem visualizar informações importantes do animal de forma centralizada.
 
-A tela de detalhes do pet também apresenta um resumo dessas informações, permitindo uma consulta mais completa do animal.
+---
 
-Alertas
+# Alertas
 
 O PetOS consulta alertas registrados pelo backend e apresenta essas informações ao Tutor.
 
-Os alertas podem estar relacionados, por exemplo, ao acompanhamento de vacinas.
+Os alertas podem estar relacionados, por exemplo, ao acompanhamento das vacinas.
 
-Nesta versão, os alertas são exibidos dentro da aplicação e não utilizam notificações push.
+Nesta versão do projeto, os alertas são exibidos dentro da aplicação.
 
-Navegação Entre Telas
+Não foi implementado envio de notificações push.
 
-A aplicação possui mais de seis telas funcionais, entre elas:
+---
 
-LoginScreen
+# Detalhes do Pet
 
-RegisterScreen
+A tela de detalhes apresenta informações completas do animal.
 
-HomeScreen
+São exibidos:
 
-ClinicHomeScreen
+- nome
+- espécie
+- raça
+- idade
+- peso
+- tutor
+- telefone
+- quantidade de vacinas
+- cuidados recentes
+- alertas
+- histórico resumido
 
-PetsListScreen
+O Tutor também pode editar as informações do pet diretamente por essa tela.
 
-PetRegisterScreen
+Para a Clínica, a tela funciona principalmente como consulta.
 
-PetDetailsScreen
+---
 
-HistoryScreen
+# Navegação Entre Telas
 
-VaccinesScreen
+O aplicativo possui navegação funcional entre múltiplas telas.
 
-ProfileScreen
+As principais telas são:
 
-A navegação é protegida de acordo com o estado de autenticação do usuário.
+- LoginScreen
+- RegisterScreen
+- HomeScreen
+- ClinicHomeScreen
+- PetsListScreen
+- PetRegisterScreen
+- PetDetailsScreen
+- HistoryScreen
+- VaccinesScreen
+- ProfileScreen
 
-TanStack Query
+A navegação é controlada de acordo com o estado de autenticação do usuário.
+
+---
+
+# TanStack Query
 
 O TanStack Query foi utilizado para controlar as requisições realizadas pelo aplicativo.
 
-A lógica foi separada das telas utilizando hooks personalizados.
+A lógica de requisições foi separada da interface utilizando hooks personalizados.
 
-Exemplos:
+Entre os hooks utilizados estão:
 
-usePets
-usePetDetails
-useVaccines
-useAllVaccines
-useRoutines
-usePetHistory
-useAlerts
-useTutorVaccines
-useLogin
-useRegister
+- usePets
+- usePetDetails
+- useVaccines
+- useAllVaccines
+- useRoutines
+- usePetHistory
+- useAlerts
+- useTutorVaccines
+- useLogin
+- useRegister
 
-Dessa forma, as telas ficam responsáveis principalmente pela interface, enquanto os hooks controlam:
+Os hooks são responsáveis por:
 
-consultas;
+- consultas
+- mutations
+- loading
+- tratamento de erros
+- atualização dos dados
+- invalidação de cache
 
-mutations;
+As telas ficam responsáveis principalmente pela interface e interação com o usuário.
 
-loading;
+---
 
-erros;
+# Arquitetura da Aplicação
 
-atualização dos dados;
+A aplicação foi organizada separando interface, lógica e comunicação com a API.
 
-invalidação de cache.
-
-Exemplo de fluxo:
-
-PetsListScreen
-      ↓
-usePets
-      ↓
-petService
-      ↓
-api.ts
-      ↓
-Backend
-
-Estrutura do Projeto
-
+```text
 src/
 ├── components/
 │   └── BottomNavigation.tsx
@@ -401,145 +388,3 @@ src/
 │   └── colors.ts
 │
 └── types/
-
-Integração com o Backend
-
-O aplicativo utiliza uma API REST real desenvolvida em Spring Boot.
-
-Backend em produção:
-
-https://petos-java.onrender.com
-
-Repositório do backend:
-
-https://github.com/gugomesx10/PetOS-Java
-
-Principais Endpoints Utilizados
-
-Autenticação
-
-POST /auth/register
-POST /auth/login
-GET  /auth/me
-
-Pets
-
-GET    /pets
-GET    /pets/{id}
-POST   /pets
-PUT    /pets/{id}
-DELETE /pets/{id}
-
-Vacinas
-
-GET    /vaccines
-GET    /vaccines/{id}
-GET    /pets/{petId}/vaccines
-POST   /vaccines
-PUT    /vaccines/{id}
-DELETE /vaccines/{id}
-
-Cuidados / Rotinas
-
-GET    /pets/{petId}/routines
-POST   /routines
-PUT    /routines/{id}
-DELETE /routines/{id}
-
-Histórico
-
-GET /pets/{id}/history
-
-Alertas
-
-GET /alerts/pending
-
-Persistência de Dados
-
-Na Sprint 3, os dados principais do aplicativo não ficam mais armazenados localmente.
-
-Pets, vacinas, cuidados, histórico e alertas são obtidos através da API.
-
-O AsyncStorage é utilizado para persistir a sessão de autenticação, permitindo manter o usuário conectado mesmo após fechar o aplicativo.
-
-Como Executar o Projeto
-
-Clone o repositório:
-
-git clone https://github.com/Canadas7/PetOs-Mobile-application-development.git
-
-Entre na pasta do projeto:
-
-cd PetOs-Mobile-application-development
-
-Instale as dependências:
-
-npm install
-
-Inicie o Expo:
-
-npx expo start
-
-Depois, utilize o Expo Go ou um emulador compatível para executar o aplicativo.
-
-Validação do Projeto
-
-Para verificar possíveis erros de TypeScript:
-
-npx tsc --noEmit
-
-Para verificar a compatibilidade das dependências do Expo:
-
-npx expo-doctor@latest
-
-Repositórios
-
-Mobile
-
-https://github.com/Canadas7/PetOs-Mobile-application-development
-
-Backend
-
-https://github.com/gugomesx10/PetOS-Java
-
-Integrantes
-
-Preencher com os dados da equipe:
-
-Nome:
-RM:
-
-Nome:
-RM:
-
-Sprint 3
-
-Nesta Sprint, o foco principal foi transformar o protótipo mobile em uma aplicação integrada de forma real ao backend.
-
-Foram implementados:
-
-autenticação com JWT;
-
-persistência de sessão;
-
-integração com API REST;
-
-CRUD completo de pets;
-
-CRUD completo de vacinas;
-
-CRUD de cuidados;
-
-histórico;
-
-alertas;
-
-diferenciação entre Tutor e Clínica;
-
-TanStack Query;
-
-hooks personalizados;
-
-separação entre interface, lógica e serviços.
-
-O resultado é uma aplicação mobile funcional, integrada ao backend e preparada para evolução nas próximas etapas do projeto.
