@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 import {
   View,
   Text,
@@ -8,110 +9,152 @@ import {
   ActivityIndicator,
 } from "react-native";
 
-import { useMutation } from "@tanstack/react-query";
-
 import colors from "../styles/colors";
-import { login } from "../services/authService";
-import { saveAuthSession } from "../storage/authStorage";
-import { useAuth } from "../contexts/AuthContext";
+import { useLogin } from "../hooks/useLogin";
 
-export default function LoginScreen({ navigation }: any) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [formError, setFormError] = useState("");
+export default function LoginScreen({
+  navigation,
+}: any) {
+  const [email, setEmail] =
+    useState("");
 
-  const { refreshSession } = useAuth();
+  const [password, setPassword] =
+    useState("");
 
-  const loginMutation = useMutation({
-    mutationFn: login,
+  const [formError, setFormError] =
+    useState("");
 
-    onSuccess: async (data) => {
-      await saveAuthSession(
-        data.token,
-        data.name,
-        data.email,
-        data.role
-      );
+  const {
+    loginUser,
+    isLoggingIn,
+  } = useLogin();
 
-      await refreshSession();
-    },
-
-    onError: (error: Error) => {
-      setFormError(error.message);
-    },
-  });
-
-  function handleLogin() {
+  async function handleLogin() {
     setFormError("");
 
-    if (!email.trim() || !password.trim()) {
-      setFormError("Preencha o e-mail e a senha.");
+    if (
+      !email.trim() ||
+      !password.trim()
+    ) {
+      setFormError(
+        "Preencha o e-mail e a senha."
+      );
+
       return;
     }
 
-    loginMutation.mutate({
-      email: email.trim().toLowerCase(),
-      password,
-    });
+    try {
+      await loginUser({
+        email:
+          email
+            .trim()
+            .toLowerCase(),
+
+        password,
+      });
+    } catch (error) {
+      setFormError(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível entrar."
+      );
+    }
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>PetOS</Text>
+      <Text style={styles.logo}>
+        PetOS
+      </Text>
 
-      <Text style={styles.title}>Bem-vindo!</Text>
+      <Text style={styles.title}>
+        Bem-vindo!
+      </Text>
 
       <Text style={styles.subtitle}>
-        Entre para acompanhar a saúde do seu pet.
+        Entre para acompanhar a saúde
+        do seu pet.
       </Text>
 
       <TextInput
         style={styles.input}
         placeholder="Digite seu e-mail"
-        placeholderTextColor={colors.gray}
+        placeholderTextColor={
+          colors.gray
+        }
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
+        autoCorrect={false}
       />
 
       <TextInput
         style={styles.input}
         placeholder="Digite sua senha"
-        placeholderTextColor={colors.gray}
+        placeholderTextColor={
+          colors.gray
+        }
         secureTextEntry
         value={password}
         onChangeText={setPassword}
       />
 
       {formError ? (
-        <Text style={styles.error}>{formError}</Text>
+        <Text style={styles.error}>
+          {formError}
+        </Text>
       ) : null}
 
       <TouchableOpacity
         style={[
           styles.button,
-          loginMutation.isPending && styles.buttonDisabled,
+          isLoggingIn &&
+            styles.buttonDisabled,
         ]}
         onPress={handleLogin}
-        disabled={loginMutation.isPending}
+        disabled={isLoggingIn}
       >
-        {loginMutation.isPending ? (
-          <ActivityIndicator color={colors.primary} />
+        {isLoggingIn ? (
+          <ActivityIndicator
+            color={colors.primary}
+          />
         ) : (
-          <Text style={styles.buttonText}>Entrar</Text>
+          <Text
+            style={
+              styles.buttonText
+            }
+          >
+            Entrar
+          </Text>
         )}
       </TouchableOpacity>
 
-      <View style={styles.registerContainer}>
-        <Text style={styles.registerText}>
+      <View
+        style={
+          styles.registerContainer
+        }
+      >
+        <Text
+          style={
+            styles.registerText
+          }
+        >
           Ainda não possui uma conta?
         </Text>
 
         <TouchableOpacity
-          onPress={() => navigation.navigate("Register")}
+          onPress={() =>
+            navigation.navigate(
+              "Register"
+            )
+          }
         >
-          <Text style={styles.registerLink}>
+          <Text
+            style={
+              styles.registerLink
+            }
+          >
             Criar conta
           </Text>
         </TouchableOpacity>
