@@ -13,17 +13,13 @@ import {
 
 import { Ionicons } from "@expo/vector-icons";
 
-import {
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
-
 import colors from "../styles/colors";
 
 import {
-  createPet,
   Species,
 } from "../services/petService";
+
+import { usePets } from "../hooks/usePets";
 
 import { useAuth } from "../contexts/AuthContext";
 
@@ -45,7 +41,14 @@ export default function PetRegisterScreen({
 }: any) {
   const { session } = useAuth();
 
-  const queryClient = useQueryClient();
+  const {
+    createPet,
+    isCreatingPet,
+  } = usePets({
+    enabled: false,
+    role: session?.role,
+    email: session?.email,
+  });
 
   const [name, setName] = useState("");
   const [species, setSpecies] =
@@ -57,32 +60,6 @@ export default function PetRegisterScreen({
   const [tutorPhone, setTutorPhone] = useState("");
 
   const [formError, setFormError] = useState("");
-
-  const createMutation = useMutation({
-    mutationFn: createPet,
-
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["pets"],
-      });
-
-      Alert.alert(
-        "Pet cadastrado",
-        "O pet foi cadastrado com sucesso.",
-        [
-          {
-            text: "OK",
-            onPress: () =>
-              navigation.navigate("PetsList"),
-          },
-        ]
-      );
-    },
-
-    onError: (error: Error) => {
-      setFormError(error.message);
-    },
-  });
 
   function validateDate(date: string) {
     const pattern = /^\d{4}-\d{2}-\d{2}$/;
@@ -102,7 +79,7 @@ export default function PetRegisterScreen({
     return parsedDate < today;
   }
 
-  function handleRegister() {
+  async function handleRegister() {
     setFormError("");
 
     if (session?.role !== "TUTOR") {
@@ -161,28 +138,48 @@ export default function PetRegisterScreen({
       return;
     }
 
-    createMutation.mutate({
-      name: name.trim(),
-      species,
+    try {
+      await createPet({
+        name: name.trim(),
+        species,
 
-      breed: breed.trim()
-        ? breed.trim()
-        : undefined,
+        breed: breed.trim()
+          ? breed.trim()
+          : undefined,
 
-      birthDate: birthDate.trim()
-        ? birthDate.trim()
-        : undefined,
+        birthDate: birthDate.trim()
+          ? birthDate.trim()
+          : undefined,
 
-      weight: weight.trim()
-        ? Number(weight.replace(",", "."))
-        : undefined,
+        weight: weight.trim()
+          ? Number(weight.replace(",", "."))
+          : undefined,
 
-      tutorName: session.name,
+        tutorName: session.name,
 
-      tutorPhone: tutorPhone.trim()
-        ? tutorPhone.trim()
-        : undefined,
-    });
+        tutorPhone: tutorPhone.trim()
+          ? tutorPhone.trim()
+          : undefined,
+      });
+
+      Alert.alert(
+        "Pet cadastrado",
+        "O pet foi cadastrado com sucesso.",
+        [
+          {
+            text: "OK",
+            onPress: () =>
+              navigation.navigate("PetsList"),
+          },
+        ]
+      );
+    } catch (error) {
+      setFormError(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível cadastrar o pet."
+      );
+    }
   }
 
   if (session?.role === "CLINICA") {
@@ -378,13 +375,13 @@ export default function PetRegisterScreen({
         <TouchableOpacity
           style={[
             styles.registerButton,
-            createMutation.isPending &&
+            isCreatingPet &&
               styles.disabledButton,
           ]}
           onPress={handleRegister}
-          disabled={createMutation.isPending}
+          disabled={isCreatingPet}
         >
-          {createMutation.isPending ? (
+          {isCreatingPet ? (
             <ActivityIndicator
               color={colors.primary}
             />

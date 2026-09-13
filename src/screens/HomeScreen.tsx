@@ -12,27 +12,19 @@ import {
   MaterialIcons,
 } from "@expo/vector-icons";
 
-import { useQueries, useQuery } from "@tanstack/react-query";
-
 import colors from "../styles/colors";
 import BottomNavigation from "../components/BottomNavigation";
 
 import {
-  getPets,
   PetResponse,
   Species,
 } from "../services/petService";
 
-import {
-  getPendingAlerts,
-} from "../services/alertService";
-
 import { useAuth } from "../contexts/AuthContext";
 
-import {
-  getVaccinesByPet,
-  VaccineResponse,
-} from "../services/vaccineService";
+import { usePets } from "../hooks/usePets";
+import { useAlerts } from "../hooks/useAlerts";
+import { useTutorVaccines } from "../hooks/useTutorVaccines";
 
 import ClinicHomeScreen from "./ClinicHomeScreen";
 
@@ -40,68 +32,33 @@ export default function HomeScreen({ navigation }: any) {
   const { session } = useAuth();
 
   const {
-    data: pets = [],
-    isLoading: petsLoading,
-    isError: petsError,
-    refetch: refetchPets,
-  } = useQuery({
-    queryKey: [
-      "pets",
-      session?.role,
-      session?.email,
-    ],
-    queryFn: getPets,
+    pets,
+    petsLoading,
+    petsError,
+    refetchPets,
+  } = usePets({
     enabled: session?.role === "TUTOR",
+    role: session?.role,
+    email: session?.email,
   });
 
   const {
-    data: alerts = [],
-    isLoading: alertsLoading,
-    refetch: refetchAlerts,
-  } = useQuery({
-    queryKey: [
-      "alerts",
-      "pending",
-      session?.email,
-    ],
-    queryFn: getPendingAlerts,
+    alerts,
+    alertsLoading,
+    refetchAlerts,
+  } = useAlerts({
     enabled: session?.role === "TUTOR",
-    refetchOnMount: "always",
-    refetchOnReconnect: true,
+    email: session?.email,
   });
 
-  const vaccineQueries = useQueries({
-    queries: pets.map((pet) => ({
-      queryKey: [
-        "vaccines",
-        "tutor-home",
-        pet.id,
-      ],
-      queryFn: () =>
-        getVaccinesByPet(pet.id),
-      enabled:
-        session?.role === "TUTOR",
-      refetchOnMount: "always" as const,
-      refetchOnReconnect: true,
-    })),
-  });
-
-  const allVaccines: VaccineResponse[] =
-    vaccineQueries.flatMap(
-      (query) => query.data ?? []
-    );
-
-  const vaccinesLoading =
-    vaccineQueries.some(
-      (query) => query.isLoading
-    );
-
-  const latestVaccine =
-    allVaccines.length > 0
-      ? [...allVaccines].sort(
-          (a, b) => b.id - a.id
-        )[0]
-      : undefined;
+  const {
+    latestVaccine,
+    vaccinesLoading,
+    refetchVaccines,
+  } = useTutorVaccines(
+    pets,
+    session?.role === "TUTOR"
+  );
 
 
   const firstPet: PetResponse | undefined = pets[0];
@@ -545,13 +502,10 @@ export default function HomeScreen({ navigation }: any) {
           <TouchableOpacity
             style={styles.refreshAlerts}
             onPress={async () => {
-              await refetchAlerts();
-
-              await Promise.all(
-                vaccineQueries.map(
-                  (query) => query.refetch()
-                )
-              );
+              await Promise.all([
+                refetchAlerts(),
+                refetchVaccines(),
+              ]);
             }}
           >
             <Ionicons

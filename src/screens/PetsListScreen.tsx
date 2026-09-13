@@ -10,62 +10,39 @@ import {
   Alert,
 } from "react-native";
 
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-
 import colors from "../styles/colors";
 
 import {
-  deletePet,
-  getPets,
   PetResponse,
   Species,
 } from "../services/petService";
 
 import { useAuth } from "../contexts/AuthContext";
+import { usePets } from "../hooks/usePets";
 
-export default function PetsListScreen({ navigation }: any) {
+export default function PetsListScreen({
+  navigation,
+}: any) {
   const { session } = useAuth();
 
-  const queryClient = useQueryClient();
-
   const {
-    data: pets = [],
-    isLoading,
-    isError,
-    error,
-    refetch,
-    isRefetching,
-  } = useQuery({
-    queryKey: [
-      "pets",
-      session?.role,
-      session?.email,
-    ],
-    queryFn: getPets,
+    pets,
+    petsLoading,
+    petsError,
+    petsErrorObject,
+    petsRefetching,
+    refetchPets,
+    deletePet,
+    isDeletingPet,
+  } = usePets({
+    enabled: !!session,
+    role: session?.role,
+    email: session?.email,
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: deletePet,
-
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["pets"],
-      });
-    },
-
-    onError: (error: Error) => {
-      Alert.alert(
-        "Erro ao excluir",
-        error.message
-      );
-    },
-  });
-
-  function handleDeletePet(pet: PetResponse) {
+  function handleDeletePet(
+    pet: PetResponse
+  ) {
     if (session?.role !== "TUTOR") {
       return;
     }
@@ -81,16 +58,31 @@ export default function PetsListScreen({ navigation }: any) {
         {
           text: "Excluir",
           style: "destructive",
-          onPress: () => {
-            deleteMutation.mutate(pet.id);
+
+          onPress: async () => {
+            try {
+              await deletePet(pet.id);
+            } catch (error) {
+              Alert.alert(
+                "Erro ao excluir",
+                error instanceof Error
+                  ? error.message
+                  : "Não foi possível excluir o pet."
+              );
+            }
           },
         },
       ]
     );
   }
 
-  function getSpeciesName(species: Species) {
-    const speciesNames: Record<Species, string> = {
+  function getSpeciesName(
+    species: Species
+  ) {
+    const speciesNames: Record<
+      Species,
+      string
+    > = {
       DOG: "Cachorro",
       CAT: "Gato",
       BIRD: "Ave",
@@ -103,7 +95,9 @@ export default function PetsListScreen({ navigation }: any) {
     return speciesNames[species];
   }
 
-  function formatAge(ageInMonths: number | null) {
+  function formatAge(
+    ageInMonths: number | null
+  ) {
     if (ageInMonths === null) {
       return "Idade não informada";
     }
@@ -114,8 +108,12 @@ export default function PetsListScreen({ navigation }: any) {
         : `${ageInMonths} meses`;
     }
 
-    const years = Math.floor(ageInMonths / 12);
-    const months = ageInMonths % 12;
+    const years = Math.floor(
+      ageInMonths / 12
+    );
+
+    const months =
+      ageInMonths % 12;
 
     if (months === 0) {
       return years === 1
@@ -130,7 +128,7 @@ export default function PetsListScreen({ navigation }: any) {
     }`;
   }
 
-  if (isLoading) {
+  if (petsLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator
@@ -145,7 +143,7 @@ export default function PetsListScreen({ navigation }: any) {
     );
   }
 
-  if (isError) {
+  if (petsError) {
     return (
       <View style={styles.loadingContainer}>
         <Text style={styles.errorTitle}>
@@ -153,14 +151,14 @@ export default function PetsListScreen({ navigation }: any) {
         </Text>
 
         <Text style={styles.errorText}>
-          {error instanceof Error
-            ? error.message
+          {petsErrorObject instanceof Error
+            ? petsErrorObject.message
             : "Ocorreu um erro inesperado."}
         </Text>
 
         <TouchableOpacity
           style={styles.button}
-          onPress={() => refetch()}
+          onPress={() => refetchPets()}
         >
           <Text style={styles.buttonText}>
             Tentar novamente
@@ -194,7 +192,9 @@ export default function PetsListScreen({ navigation }: any) {
             <TouchableOpacity
               style={styles.button}
               onPress={() =>
-                navigation.navigate("PetRegister")
+                navigation.navigate(
+                  "PetRegister"
+                )
               }
             >
               <Text style={styles.buttonText}>
@@ -210,8 +210,8 @@ export default function PetsListScreen({ navigation }: any) {
             item.id.toString()
           }
           showsVerticalScrollIndicator={false}
-          refreshing={isRefetching}
-          onRefresh={refetch}
+          refreshing={petsRefetching}
+          onRefresh={refetchPets}
           contentContainerStyle={
             styles.listContent
           }
@@ -233,32 +233,38 @@ export default function PetsListScreen({ navigation }: any) {
                 </Text>
 
                 <Text style={styles.petInfo}>
-                  {getSpeciesName(item.species)}
+                  {getSpeciesName(
+                    item.species
+                  )}
                   {item.breed
                     ? ` • ${item.breed}`
                     : ""}
                 </Text>
 
                 <Text style={styles.petAge}>
-                  {formatAge(item.ageInMonths)}
+                  {formatAge(
+                    item.ageInMonths
+                  )}
                 </Text>
 
-                {session?.role === "CLINICA" && (
+                {session?.role ===
+                  "CLINICA" && (
                   <Text style={styles.tutor}>
                     Tutor: {item.tutorName}
                   </Text>
                 )}
               </TouchableOpacity>
 
-              {session?.role === "TUTOR" && (
+              {session?.role ===
+                "TUTOR" && (
                 <TouchableOpacity
                   style={[
                     styles.deleteButton,
-                    deleteMutation.isPending &&
+                    isDeletingPet &&
                       styles.disabledButton,
                   ]}
                   disabled={
-                    deleteMutation.isPending
+                    isDeletingPet
                   }
                   onPress={() =>
                     handleDeletePet(item)
@@ -288,7 +294,9 @@ export default function PetsListScreen({ navigation }: any) {
               )
             }
           >
-            <Text style={styles.addButtonText}>
+            <Text
+              style={styles.addButtonText}
+            >
               + Cadastrar novo pet
             </Text>
           </TouchableOpacity>
@@ -366,7 +374,7 @@ const styles = StyleSheet.create({
   },
 
   listContent: {
-    paddingBottom: 20,
+    paddingBottom: 110,
   },
 
   petCard: {
@@ -422,7 +430,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 14,
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 90,
   },
 
   addButtonText: {

@@ -16,29 +16,20 @@ import {
   MaterialIcons,
 } from "@expo/vector-icons";
 
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
 
 import colors from "../styles/colors";
 import BottomNavigation from "../components/BottomNavigation";
 
-import { getPets } from "../services/petService";
-
 import {
-  createRoutine,
-  deleteRoutine,
-  getRoutinesByPet,
   RoutineResponse,
   RoutineType,
-  updateRoutine,
 } from "../services/routineService";
 
-import { getPetHistory } from "../services/historyService";
-
 import { useAuth } from "../contexts/AuthContext";
+
+import { usePets } from "../hooks/usePets";
+import { useRoutines } from "../hooks/useRoutines";
+import { usePetHistory } from "../hooks/usePetHistory";
 
 type ScreenTab = "CARE" | "HISTORY";
 
@@ -109,8 +100,6 @@ export default function HistoryScreen({
 }: any) {
   const { session } = useAuth();
 
-  const queryClient = useQueryClient();
-
   const [tab, setTab] =
     useState<ScreenTab>("CARE");
 
@@ -133,16 +122,12 @@ export default function HistoryScreen({
     useState("");
 
   const {
-    data: pets = [],
-    isLoading: petsLoading,
-  } = useQuery({
-    queryKey: [
-      "pets",
-      session?.role,
-      session?.email,
-    ],
-    queryFn: getPets,
+    pets,
+    petsLoading,
+  } = usePets({
     enabled: session?.role === "TUTOR",
+    role: session?.role,
+    email: session?.email,
   });
 
   useEffect(() => {
@@ -155,123 +140,30 @@ export default function HistoryScreen({
   }, [pets, selectedPetId]);
 
   const {
-    data: routines = [],
-    isLoading: routinesLoading,
-    isError: routinesError,
-    refetch: refetchRoutines,
-  } = useQuery({
-    queryKey: [
-      "routines",
-      selectedPetId,
-    ],
-
-    queryFn: () =>
-      getRoutinesByPet(selectedPetId!),
-
-    enabled:
-      session?.role === "TUTOR" &&
-      selectedPetId !== null,
-  });
+    routines,
+    routinesLoading,
+    routinesError,
+    refetchRoutines,
+    createRoutine,
+    updateRoutine,
+    deleteRoutine,
+    isCreatingRoutine,
+    isUpdatingRoutine,
+  } = useRoutines(
+    selectedPetId,
+    session?.role === "TUTOR"
+  );
 
   const {
-    data: history,
-    isLoading: historyLoading,
-    isError: historyError,
-    refetch: refetchHistory,
-  } = useQuery({
-    queryKey: [
-      "pet-history",
-      selectedPetId,
-    ],
-
-    queryFn: () =>
-      getPetHistory(selectedPetId!),
-
-    enabled:
-      session?.role === "TUTOR" &&
-      selectedPetId !== null &&
-      tab === "HISTORY",
-  });
-
-  const createMutation = useMutation({
-    mutationFn: createRoutine,
-
-    onSuccess: async () => {
-      await refreshData();
-
-      clearForm();
-
-      Alert.alert(
-        "Cuidado registrado",
-        "O cuidado foi salvo no histórico do pet."
-      );
-    },
-
-    onError: (error: Error) => {
-      setFormError(error.message);
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: number;
-      data: {
-        petId: number;
-        type: RoutineType;
-        description?: string;
-        recordDate: string;
-      };
-    }) => updateRoutine(id, data),
-
-    onSuccess: async () => {
-      await refreshData();
-
-      clearForm();
-
-      Alert.alert(
-        "Cuidado atualizado",
-        "As informações foram atualizadas."
-      );
-    },
-
-    onError: (error: Error) => {
-      setFormError(error.message);
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteRoutine,
-
-    onSuccess: async () => {
-      await refreshData();
-    },
-
-    onError: (error: Error) => {
-      Alert.alert(
-        "Erro ao excluir",
-        error.message
-      );
-    },
-  });
-
-  async function refreshData() {
-    await queryClient.invalidateQueries({
-      queryKey: [
-        "routines",
-        selectedPetId,
-      ],
-    });
-
-    await queryClient.invalidateQueries({
-      queryKey: [
-        "pet-history",
-        selectedPetId,
-      ],
-    });
-  }
+    history,
+    historyLoading,
+    historyError,
+    refetchHistory,
+  } = usePetHistory(
+    selectedPetId,
+    session?.role === "TUTOR" &&
+      tab === "HISTORY"
+  );
 
   function clearForm() {
     setEditingRoutine(null);
@@ -318,7 +210,7 @@ export default function HistoryScreen({
     return parsed <= today;
   }
 
-  function handleSave() {
+  async function handleSave() {
     setFormError("");
 
     if (!selectedPetId) {
@@ -363,16 +255,38 @@ export default function HistoryScreen({
       recordDate,
     };
 
-    if (editingRoutine) {
-      updateMutation.mutate({
-        id: editingRoutine.id,
-        data,
-      });
+    try {
+      if (editingRoutine) {
+        await updateRoutine(
+          editingRoutine.id,
+          data
+        );
 
-      return;
+        clearForm();
+
+        Alert.alert(
+          "Cuidado atualizado",
+          "As informações foram atualizadas."
+        );
+
+        return;
+      }
+
+      await createRoutine(data);
+
+      clearForm();
+
+      Alert.alert(
+        "Cuidado registrado",
+        "O cuidado foi salvo no histórico do pet."
+      );
+    } catch (error) {
+      setFormError(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível salvar o cuidado."
+      );
     }
-
-    createMutation.mutate(data);
   }
 
   function handleDelete(
@@ -390,10 +304,20 @@ export default function HistoryScreen({
           text: "Excluir",
           style: "destructive",
 
-          onPress: () =>
-            deleteMutation.mutate(
-              routine.id
-            ),
+          onPress: async () => {
+            try {
+              await deleteRoutine(
+                routine.id
+              );
+            } catch (error) {
+              Alert.alert(
+                "Erro ao excluir",
+                error instanceof Error
+                  ? error.message
+                  : "Não foi possível excluir o cuidado."
+              );
+            }
+          },
         },
       ]
     );
@@ -808,12 +732,12 @@ export default function HistoryScreen({
                     }
                     onPress={handleSave}
                     disabled={
-                      createMutation.isPending ||
-                      updateMutation.isPending
+                      isCreatingRoutine ||
+                      isUpdatingRoutine
                     }
                   >
-                    {createMutation.isPending ||
-                    updateMutation.isPending ? (
+                    {isCreatingRoutine ||
+                    isUpdatingRoutine ? (
                       <ActivityIndicator
                         color={
                           colors.primary
