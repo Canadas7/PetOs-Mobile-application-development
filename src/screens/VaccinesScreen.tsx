@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  type ScrollViewInstance,
   TextInput,
   ActivityIndicator,
   Alert,
@@ -39,7 +40,7 @@ export default function VaccinesScreen({
 }: any) {
   const { session } = useAuth();
 
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
 
   const [selectedPetId, setSelectedPetId] =
     useState<number | null>(null);
