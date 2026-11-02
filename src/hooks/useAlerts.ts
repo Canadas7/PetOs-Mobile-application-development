@@ -31,7 +31,6 @@ export function useAlerts({
     enabled,
 
     refetchOnMount: "always",
-
     refetchOnReconnect: true,
   });
 
