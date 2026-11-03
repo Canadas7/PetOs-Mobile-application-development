@@ -12,19 +12,17 @@ import {
   MaterialIcons,
 } from "@expo/vector-icons";
 
-import { useQuery } from "@tanstack/react-query";
-
 import colors from "../styles/colors";
 import BottomNavigation from "../components/BottomNavigation";
 
-import { getPets } from "../services/petService";
-
 import {
-  getVaccines,
   VaccineResponse,
 } from "../services/vaccineService";
 
 import { useAuth } from "../contexts/AuthContext";
+
+import { usePets } from "../hooks/usePets";
+import { useAllVaccines } from "../hooks/useAllVaccines";
 
 export default function ClinicHomeScreen({
   navigation,
@@ -32,28 +30,22 @@ export default function ClinicHomeScreen({
   const { session } = useAuth();
 
   const {
-    data: pets = [],
-    isLoading: petsLoading,
-    isError: petsError,
-    refetch: refetchPets,
-  } = useQuery({
-    queryKey: [
-      "pets",
-      session?.role,
-      session?.email,
-    ],
-    queryFn: getPets,
+    pets,
+    petsLoading,
+    petsError,
+    refetchPets,
+  } = usePets({
     enabled: session?.role === "CLINICA",
+    role: session?.role,
+    email: session?.email,
   });
 
   const {
-    data: vaccines = [],
-    isLoading: vaccinesLoading,
-    isError: vaccinesError,
-    refetch: refetchVaccines,
-  } = useQuery({
-    queryKey: ["vaccines", "all"],
-    queryFn: getVaccines,
+    vaccines,
+    vaccinesLoading,
+    vaccinesError,
+    refetchVaccines,
+  } = useAllVaccines({
     enabled: session?.role === "CLINICA",
   });
 
@@ -128,9 +120,11 @@ export default function ClinicHomeScreen({
 
         <TouchableOpacity
           style={styles.retryButton}
-          onPress={() => {
-            refetchPets();
-            refetchVaccines();
+          onPress={async () => {
+            await Promise.all([
+              refetchPets(),
+              refetchVaccines(),
+            ]);
           }}
         >
           <Ionicons

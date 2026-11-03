@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 import {
   View,
   Text,
@@ -8,54 +9,57 @@ import {
   ActivityIndicator,
 } from "react-native";
 
-import { useMutation } from "@tanstack/react-query";
-
 import colors from "../styles/colors";
-import { register } from "../services/authService";
+
 import {
-  saveAuthSession,
   UserRole,
 } from "../storage/authStorage";
-import { useAuth } from "../contexts/AuthContext";
 
-export default function RegisterScreen({ navigation }: any) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState<UserRole>("TUTOR");
-  const [formError, setFormError] = useState("");
+import { useRegister } from "../hooks/useRegister";
 
-  const { refreshSession } = useAuth();
+export default function RegisterScreen({
+  navigation,
+}: any) {
+  const [name, setName] =
+    useState("");
 
-  const registerMutation = useMutation({
-    mutationFn: register,
+  const [email, setEmail] =
+    useState("");
 
-    onSuccess: async (data) => {
-      await saveAuthSession(
-        data.token,
-        data.name,
-        data.email,
-        data.role
-      );
+  const [password, setPassword] =
+    useState("");
 
-      await refreshSession();
-    },
+  const [role, setRole] =
+    useState<UserRole>("TUTOR");
 
-    onError: (error: Error) => {
-      setFormError(error.message);
-    },
-  });
+  const [formError, setFormError] =
+    useState("");
 
-  function handleRegister() {
+  const {
+    registerUser,
+    isRegistering,
+  } = useRegister();
+
+  async function handleRegister() {
     setFormError("");
 
-    if (!name.trim() || !email.trim() || !password.trim()) {
-      setFormError("Preencha todos os campos.");
+    if (
+      !name.trim() ||
+      !email.trim() ||
+      !password.trim()
+    ) {
+      setFormError(
+        "Preencha todos os campos."
+      );
+
       return;
     }
 
     if (name.trim().length < 2) {
-      setFormError("Digite um nome válido.");
+      setFormError(
+        "Digite um nome válido."
+      );
+
       return;
     }
 
@@ -63,22 +67,41 @@ export default function RegisterScreen({ navigation }: any) {
       setFormError(
         "A senha deve possuir pelo menos 8 caracteres."
       );
+
       return;
     }
 
-    registerMutation.mutate({
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      password,
-      role,
-    });
+    try {
+      await registerUser({
+        name: name.trim(),
+
+        email:
+          email
+            .trim()
+            .toLowerCase(),
+
+        password,
+
+        role,
+      });
+    } catch (error) {
+      setFormError(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível criar a conta."
+      );
+    }
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>PetOS</Text>
+      <Text style={styles.logo}>
+        PetOS
+      </Text>
 
-      <Text style={styles.title}>Criar conta</Text>
+      <Text style={styles.title}>
+        Criar conta
+      </Text>
 
       <Text style={styles.subtitle}>
         Cadastre-se para começar a utilizar o PetOS.
@@ -87,7 +110,9 @@ export default function RegisterScreen({ navigation }: any) {
       <TextInput
         style={styles.input}
         placeholder="Digite seu nome"
-        placeholderTextColor={colors.gray}
+        placeholderTextColor={
+          colors.gray
+        }
         value={name}
         onChangeText={setName}
       />
@@ -95,17 +120,22 @@ export default function RegisterScreen({ navigation }: any) {
       <TextInput
         style={styles.input}
         placeholder="Digite seu e-mail"
-        placeholderTextColor={colors.gray}
+        placeholderTextColor={
+          colors.gray
+        }
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
+        autoCorrect={false}
       />
 
       <TextInput
         style={styles.input}
         placeholder="Crie uma senha"
-        placeholderTextColor={colors.gray}
+        placeholderTextColor={
+          colors.gray
+        }
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -119,14 +149,20 @@ export default function RegisterScreen({ navigation }: any) {
         <TouchableOpacity
           style={[
             styles.roleButton,
-            role === "TUTOR" && styles.roleButtonSelected,
+
+            role === "TUTOR" &&
+              styles.roleButtonSelected,
           ]}
-          onPress={() => setRole("TUTOR")}
+          onPress={() =>
+            setRole("TUTOR")
+          }
         >
           <Text
             style={[
               styles.roleText,
-              role === "TUTOR" && styles.roleTextSelected,
+
+              role === "TUTOR" &&
+                styles.roleTextSelected,
             ]}
           >
             Tutor
@@ -136,14 +172,20 @@ export default function RegisterScreen({ navigation }: any) {
         <TouchableOpacity
           style={[
             styles.roleButton,
-            role === "CLINICA" && styles.roleButtonSelected,
+
+            role === "CLINICA" &&
+              styles.roleButtonSelected,
           ]}
-          onPress={() => setRole("CLINICA")}
+          onPress={() =>
+            setRole("CLINICA")
+          }
         >
           <Text
             style={[
               styles.roleText,
-              role === "CLINICA" && styles.roleTextSelected,
+
+              role === "CLINICA" &&
+                styles.roleTextSelected,
             ]}
           >
             Clínica Veterinária
@@ -152,36 +194,57 @@ export default function RegisterScreen({ navigation }: any) {
       </View>
 
       {formError ? (
-        <Text style={styles.error}>{formError}</Text>
+        <Text style={styles.error}>
+          {formError}
+        </Text>
       ) : null}
 
       <TouchableOpacity
         style={[
           styles.button,
-          registerMutation.isPending &&
+
+          isRegistering &&
             styles.buttonDisabled,
         ]}
         onPress={handleRegister}
-        disabled={registerMutation.isPending}
+        disabled={isRegistering}
       >
-        {registerMutation.isPending ? (
-          <ActivityIndicator color={colors.primary} />
+        {isRegistering ? (
+          <ActivityIndicator
+            color={colors.primary}
+          />
         ) : (
-          <Text style={styles.buttonText}>
+          <Text
+            style={styles.buttonText}
+          >
             Criar conta
           </Text>
         )}
       </TouchableOpacity>
 
-      <View style={styles.loginContainer}>
-        <Text style={styles.loginText}>
+      <View
+        style={
+          styles.loginContainer
+        }
+      >
+        <Text
+          style={styles.loginText}
+        >
           Já possui uma conta?
         </Text>
 
         <TouchableOpacity
-          onPress={() => navigation.navigate("Login")}
+          onPress={() =>
+            navigation.navigate(
+              "Login"
+            )
+          }
         >
-          <Text style={styles.loginLink}>
+          <Text
+            style={
+              styles.loginLink
+            }
+          >
             Entrar
           </Text>
         </TouchableOpacity>

@@ -13,32 +13,24 @@ import {
 
 import { Ionicons } from "@expo/vector-icons";
 
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
 
 import colors from "../styles/colors";
 
 import BottomNavigation from "../components/BottomNavigation";
 
-import { getPets } from "../services/petService";
-
 import {
-  createVaccine,
-  deleteVaccine,
-  getVaccinesByPet,
-  updateVaccine,
   VaccineResponse,
   VaccineStatus,
 } from "../services/vaccineService";
 
 import {
-  getRoutinesByPet,
   RoutineResponse,
   RoutineType,
 } from "../services/routineService";
+
+import { usePets } from "../hooks/usePets";
+import { useVaccines } from "../hooks/useVaccines";
+import { useRoutines } from "../hooks/useRoutines";
 
 import { useAuth } from "../contexts/AuthContext";
 
@@ -46,8 +38,6 @@ export default function VaccinesScreen({
   navigation,
 }: any) {
   const { session } = useAuth();
-
-  const queryClient = useQueryClient();
 
   const scrollRef = useRef<ScrollView>(null);
 
@@ -65,16 +55,12 @@ export default function VaccinesScreen({
   const [formError, setFormError] = useState("");
 
   const {
-    data: pets = [],
-    isLoading: petsLoading,
-  } = useQuery({
-    queryKey: [
-      "pets",
-      session?.role,
-      session?.email,
-    ],
-    queryFn: getPets,
+    pets,
+    petsLoading,
+  } = usePets({
     enabled: session?.role === "CLINICA",
+    role: session?.role,
+    email: session?.email,
   });
 
   useEffect(() => {
@@ -87,133 +73,28 @@ export default function VaccinesScreen({
   }, [pets, selectedPetId]);
 
   const {
-    data: vaccines = [],
-    isLoading: vaccinesLoading,
-    isError: vaccinesError,
-    refetch,
-  } = useQuery({
-    queryKey: [
-      "vaccines",
-      selectedPetId,
-    ],
-
-    queryFn: () =>
-      getVaccinesByPet(selectedPetId!),
-
-    enabled:
-      session?.role === "CLINICA" &&
-      selectedPetId !== null,
-  });
+    vaccines,
+    vaccinesLoading,
+    vaccinesError,
+    refetchVaccines,
+    createVaccine,
+    updateVaccine,
+    deleteVaccine,
+    isCreating,
+    isUpdating,
+  } = useVaccines(
+    selectedPetId
+  );
 
   const {
-    data: routines = [],
-    isLoading: routinesLoading,
-    isError: routinesError,
-    refetch: refetchRoutines,
-  } = useQuery({
-    queryKey: [
-      "routines",
-      selectedPetId,
-    ],
-
-    queryFn: () =>
-      getRoutinesByPet(selectedPetId!),
-
-    enabled:
-      session?.role === "CLINICA" &&
-      selectedPetId !== null,
-  });
-
-  const createMutation = useMutation({
-    mutationFn: createVaccine,
-
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: [
-          "vaccines",
-          selectedPetId,
-        ],
-      });
-
-      await queryClient.invalidateQueries({
-        queryKey: ["alerts"],
-      });
-
-      clearForm();
-
-      Alert.alert(
-        "Vacina cadastrada",
-        "A vacina foi registrada com sucesso."
-      );
-    },
-
-    onError: (error: Error) => {
-      setFormError(error.message);
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: number;
-      data: {
-        petId: number;
-        name: string;
-        applicationDate?: string;
-        dueDate?: string;
-      };
-    }) => updateVaccine(id, data),
-
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: [
-          "vaccines",
-          selectedPetId,
-        ],
-      });
-
-      await queryClient.invalidateQueries({
-        queryKey: ["alerts"],
-      });
-
-      clearForm();
-
-      Alert.alert(
-        "Vacina atualizada",
-        "As informações foram atualizadas."
-      );
-    },
-
-    onError: (error: Error) => {
-      setFormError(error.message);
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteVaccine,
-
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: [
-          "vaccines",
-          selectedPetId,
-        ],
-      });
-
-      await queryClient.invalidateQueries({
-        queryKey: ["alerts"],
-      });
-    },
-
-    onError: (error: Error) => {
-      Alert.alert(
-        "Erro ao excluir",
-        error.message
-      );
-    },
-  });
+    routines,
+    routinesLoading,
+    routinesError,
+    refetchRoutines,
+  } = useRoutines(
+    selectedPetId,
+    session?.role === "CLINICA"
+  );
 
   function clearForm() {
     setName("");
@@ -258,7 +139,7 @@ export default function VaccinesScreen({
     );
   }
 
-  function handleSave() {
+  async function handleSave() {
     setFormError("");
 
     if (session?.role !== "CLINICA") {
@@ -325,16 +206,38 @@ export default function VaccinesScreen({
         : undefined,
     };
 
-    if (editingVaccine) {
-      updateMutation.mutate({
-        id: editingVaccine.id,
-        data,
-      });
+    try {
+      if (editingVaccine) {
+        await updateVaccine(
+          editingVaccine.id,
+          data
+        );
 
-      return;
+        clearForm();
+
+        Alert.alert(
+          "Vacina atualizada",
+          "As informações foram atualizadas."
+        );
+
+        return;
+      }
+
+      await createVaccine(data);
+
+      clearForm();
+
+      Alert.alert(
+        "Vacina cadastrada",
+        "A vacina foi registrada com sucesso."
+      );
+    } catch (error) {
+      setFormError(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível salvar a vacina."
+      );
     }
-
-    createMutation.mutate(data);
   }
 
   function handleDelete(
@@ -352,10 +255,20 @@ export default function VaccinesScreen({
           text: "Excluir",
           style: "destructive",
 
-          onPress: () =>
-            deleteMutation.mutate(
-              vaccine.id
-            ),
+          onPress: async () => {
+            try {
+              await deleteVaccine(
+                vaccine.id
+              );
+            } catch (error) {
+              Alert.alert(
+                "Erro ao excluir",
+                error instanceof Error
+                  ? error.message
+                  : "Não foi possível excluir a vacina."
+              );
+            }
+          },
         },
       ]
     );
@@ -599,18 +512,18 @@ export default function VaccinesScreen({
               <TouchableOpacity
                 style={[
                   styles.saveButton,
-                  (createMutation.isPending ||
-                    updateMutation.isPending) &&
+                  (isCreating ||
+                    isUpdating) &&
                     styles.disabledButton,
                 ]}
                 onPress={handleSave}
                 disabled={
-                  createMutation.isPending ||
-                  updateMutation.isPending
+                  isCreating ||
+                  isUpdating
                 }
               >
-                {createMutation.isPending ||
-                updateMutation.isPending ? (
+                {isCreating ||
+                isUpdating ? (
                   <ActivityIndicator
                     color={colors.primary}
                   />
@@ -686,7 +599,7 @@ export default function VaccinesScreen({
                 <TouchableOpacity
                   style={styles.retryButton}
                   onPress={() =>
-                    refetch()
+                    refetchVaccines()
                   }
                 >
                   <Text

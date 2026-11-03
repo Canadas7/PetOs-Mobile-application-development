@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   View,
@@ -16,23 +16,25 @@ import {
   MaterialIcons,
 } from "@expo/vector-icons";
 
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-
 import colors from "../styles/colors";
 import BottomNavigation from "../components/BottomNavigation";
 
 import {
-  CreatePetData,
-  getPetById,
   Species,
-  updatePet,
 } from "../services/petService";
 
+import {
+  VaccineStatus,
+} from "../services/vaccineService";
+
+import {
+  RoutineResponse,
+  RoutineType,
+} from "../services/routineService";
+
 import { useAuth } from "../contexts/AuthContext";
+import { usePetDetails } from "../hooks/usePetDetails";
+import { usePetHistory } from "../hooks/usePetHistory";
 
 const speciesOptions: {
   label: string;
@@ -47,38 +49,84 @@ const speciesOptions: {
   { label: "Outro", value: "OTHER" },
 ];
 
+const routineLabels: Record<
+  RoutineType,
+  string
+> = {
+  WALK: "Passeio",
+  FEEDING: "Alimentação",
+  MEDICATION: "Medicamento",
+  BATHING: "Banho",
+  GROOMING: "Higiene",
+  VET_VISIT: "Veterinário",
+  TRAINING: "Treinamento",
+  OTHER: "Outro",
+};
+
+const vaccineStatusLabels: Record<
+  VaccineStatus,
+  string
+> = {
+  PENDING: "Pendente",
+  APPLIED: "Aplicada",
+  EXPIRING_SOON:
+    "Próxima do vencimento",
+  OVERDUE: "Vencida",
+};
+
 export default function PetDetailsScreen({
   route,
   navigation,
 }: any) {
   const initialPet = route.params?.pet;
+  const petId =
+    initialPet?.id ?? null;
 
   const { session } = useAuth();
-  const queryClient = useQueryClient();
-
-  const petId = initialPet?.id;
-
-  const [editing, setEditing] = useState(false);
-
-  const [name, setName] = useState("");
-  const [species, setSpecies] =
-    useState<Species>("DOG");
-  const [breed, setBreed] = useState("");
-  const [birthDate, setBirthDate] = useState("");
-  const [weight, setWeight] = useState("");
-  const [tutorPhone, setTutorPhone] = useState("");
-  const [formError, setFormError] = useState("");
 
   const {
-    data: pet,
-    isLoading,
-    isError,
-    error,
-  } = useQuery({
-    queryKey: ["pet", petId],
-    queryFn: () => getPetById(petId),
-    enabled: !!petId,
-  });
+    pet,
+    petLoading,
+    petError,
+    petErrorObject,
+    refetchPet,
+    updatePet,
+    isUpdatingPet,
+  } = usePetDetails(petId);
+
+  const {
+    history,
+    historyLoading,
+    historyError,
+    refetchHistory,
+  } = usePetHistory(
+    petId,
+    petId !== null
+  );
+
+  const [editing, setEditing] =
+    useState(false);
+
+  const [name, setName] =
+    useState("");
+
+  const [species, setSpecies] =
+    useState<Species>("DOG");
+
+  const [breed, setBreed] =
+    useState("");
+
+  const [birthDate, setBirthDate] =
+    useState("");
+
+  const [weight, setWeight] =
+    useState("");
+
+  const [tutorPhone, setTutorPhone] =
+    useState("");
+
+  const [formError, setFormError] =
+    useState("");
 
   useEffect(() => {
     if (!pet) {
@@ -89,47 +137,61 @@ export default function PetDetailsScreen({
     setSpecies(pet.species);
     setBreed(pet.breed || "");
     setBirthDate(pet.birthDate || "");
+
     setWeight(
       pet.weight !== null
         ? String(pet.weight)
         : ""
     );
-    setTutorPhone(pet.tutorPhone || "");
+
+    setTutorPhone(
+      pet.tutorPhone || ""
+    );
   }, [pet]);
 
-  const updateMutation = useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: number;
-      data: CreatePetData;
-    }) => updatePet(id, data),
+  const recentVaccines = useMemo(
+    () =>
+      history?.vaccines
+        ?.slice()
+        .sort(
+          (a, b) =>
+            b.id - a.id
+        )
+        .slice(0, 3) ?? [],
+    [history]
+  );
 
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["pets"],
-      });
+  const recentRoutines = useMemo(
+    () =>
+      history?.routines
+        ?.slice()
+        .sort(
+          (a, b) =>
+            b.id - a.id
+        )
+        .slice(0, 3) ?? [],
+    [history]
+  );
 
-      await queryClient.invalidateQueries({
-        queryKey: ["pet", petId],
-      });
+  const recentAlerts = useMemo(
+    () =>
+      history?.alerts
+        ?.slice()
+        .sort(
+          (a, b) =>
+            b.id - a.id
+        )
+        .slice(0, 3) ?? [],
+    [history]
+  );
 
-      setEditing(false);
-
-      Alert.alert(
-        "Pet atualizado",
-        "As informações foram atualizadas com sucesso."
-      );
-    },
-
-    onError: (error: Error) => {
-      setFormError(error.message);
-    },
-  });
-
-  function getSpeciesName(value: Species) {
-    const names: Record<Species, string> = {
+  function getSpeciesName(
+    value: Species
+  ) {
+    const names: Record<
+      Species,
+      string
+    > = {
       DOG: "Cachorro",
       CAT: "Gato",
       BIRD: "Ave",
@@ -142,7 +204,9 @@ export default function PetDetailsScreen({
     return names[value];
   }
 
-  function formatAge(ageInMonths: number | null) {
+  function formatAge(
+    ageInMonths: number | null
+  ) {
     if (ageInMonths === null) {
       return "Não informada";
     }
@@ -157,7 +221,8 @@ export default function PetDetailsScreen({
       ageInMonths / 12
     );
 
-    const months = ageInMonths % 12;
+    const months =
+      ageInMonths % 12;
 
     if (months === 0) {
       return years === 1
@@ -166,35 +231,67 @@ export default function PetDetailsScreen({
     }
 
     return `${years} ${
-      years === 1 ? "ano" : "anos"
+      years === 1
+        ? "ano"
+        : "anos"
     } e ${months} ${
-      months === 1 ? "mês" : "meses"
+      months === 1
+        ? "mês"
+        : "meses"
     }`;
   }
 
-  function validateDate(date: string) {
+  function formatDate(
+    date: string | null | undefined
+  ) {
+    if (!date) {
+      return "Não informada";
+    }
+
+    const dateOnly =
+      date.split("T")[0];
+
+    const [year, month, day] =
+      dateOnly.split("-");
+
+    if (!year || !month || !day) {
+      return date;
+    }
+
+    return `${day}/${month}/${year}`;
+  }
+
+  function validateDate(
+    date: string
+  ) {
     if (!date) {
       return true;
     }
 
-    const pattern = /^\d{4}-\d{2}-\d{2}$/;
+    const pattern =
+      /^\d{4}-\d{2}-\d{2}$/;
 
     if (!pattern.test(date)) {
       return false;
     }
 
-    const parsedDate = new Date(
-      `${date}T00:00:00`
-    );
+    const parsedDate =
+      new Date(
+        `${date}T00:00:00`
+      );
 
-    if (Number.isNaN(parsedDate.getTime())) {
+    if (
+      Number.isNaN(
+        parsedDate.getTime()
+      )
+    ) {
       return false;
     }
 
     return parsedDate < new Date();
   }
 
-  function handleUpdate() {
+  async function handleUpdate() {
     setFormError("");
 
     if (!pet) {
@@ -205,60 +302,88 @@ export default function PetDetailsScreen({
       setFormError(
         "Digite o nome do pet."
       );
+
       return;
     }
 
-    if (!validateDate(birthDate)) {
+    if (
+      !validateDate(birthDate)
+    ) {
       setFormError(
         "Informe a data no formato AAAA-MM-DD."
       );
+
       return;
     }
 
     if (weight.trim()) {
-      const numericWeight = Number(
-        weight.replace(",", ".")
-      );
+      const numericWeight =
+        Number(
+          weight.replace(",", ".")
+        );
 
       if (
-        Number.isNaN(numericWeight) ||
+        Number.isNaN(
+          numericWeight
+        ) ||
         numericWeight <= 0
       ) {
         setFormError(
           "Informe um peso válido."
         );
+
         return;
       }
     }
 
-    updateMutation.mutate({
-      id: pet.id,
+    try {
+      await updatePet(
+        pet.id,
+        {
+          name: name.trim(),
+          species,
 
-      data: {
-        name: name.trim(),
-        species,
+          breed: breed.trim()
+            ? breed.trim()
+            : undefined,
 
-        breed: breed.trim()
-          ? breed.trim()
-          : undefined,
+          birthDate:
+            birthDate.trim()
+              ? birthDate.trim()
+              : undefined,
 
-        birthDate: birthDate.trim()
-          ? birthDate.trim()
-          : undefined,
+          weight: weight.trim()
+            ? Number(
+                weight.replace(
+                  ",",
+                  "."
+                )
+              )
+            : undefined,
 
-        weight: weight.trim()
-          ? Number(
-              weight.replace(",", ".")
-            )
-          : undefined,
+          tutorName:
+            pet.tutorName,
 
-        tutorName: pet.tutorName,
+          tutorPhone:
+            tutorPhone.trim()
+              ? tutorPhone.trim()
+              : undefined,
+        }
+      );
 
-        tutorPhone: tutorPhone.trim()
-          ? tutorPhone.trim()
-          : undefined,
-      },
-    });
+      setEditing(false);
+
+      Alert.alert(
+        "Pet atualizado",
+        "As informações foram atualizadas com sucesso."
+      );
+    } catch (error) {
+      setFormError(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível atualizar o pet."
+      );
+    }
   }
 
   function handleCancelEdit() {
@@ -269,32 +394,59 @@ export default function PetDetailsScreen({
     setName(pet.name);
     setSpecies(pet.species);
     setBreed(pet.breed || "");
-    setBirthDate(pet.birthDate || "");
+    setBirthDate(
+      pet.birthDate || ""
+    );
+
     setWeight(
       pet.weight !== null
         ? String(pet.weight)
         : ""
     );
-    setTutorPhone(pet.tutorPhone || "");
+
+    setTutorPhone(
+      pet.tutorPhone || ""
+    );
 
     setFormError("");
     setEditing(false);
   }
 
+  async function refreshDetails() {
+    await Promise.all([
+      refetchPet(),
+      refetchHistory(),
+    ]);
+  }
+
   if (!petId) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorTitle}>
+      <View
+        style={
+          styles.centerContainer
+        }
+      >
+        <Text
+          style={
+            styles.errorTitle
+          }
+        >
           Pet não encontrado.
         </Text>
 
         <TouchableOpacity
           style={styles.mainButton}
           onPress={() =>
-            navigation.navigate("PetsList")
+            navigation.navigate(
+              "PetsList"
+            )
           }
         >
-          <Text style={styles.mainButtonText}>
+          <Text
+            style={
+              styles.mainButtonText
+            }
+          >
             Voltar
           </Text>
         </TouchableOpacity>
@@ -302,41 +454,68 @@ export default function PetDetailsScreen({
     );
   }
 
-  if (isLoading) {
+  if (petLoading) {
     return (
-      <View style={styles.centerContainer}>
+      <View
+        style={
+          styles.centerContainer
+        }
+      >
         <ActivityIndicator
           size="large"
           color={colors.teal}
         />
 
-        <Text style={styles.loadingText}>
+        <Text
+          style={
+            styles.loadingText
+          }
+        >
           Carregando pet...
         </Text>
       </View>
     );
   }
 
-  if (isError || !pet) {
+  if (petError || !pet) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorTitle}>
+      <View
+        style={
+          styles.centerContainer
+        }
+      >
+        <Text
+          style={
+            styles.errorTitle
+          }
+        >
           Não foi possível carregar o pet.
         </Text>
 
-        <Text style={styles.errorText}>
-          {error instanceof Error
-            ? error.message
+        <Text
+          style={
+            styles.errorText
+          }
+        >
+          {petErrorObject
+            instanceof Error
+            ? petErrorObject.message
             : "Pet não encontrado."}
         </Text>
 
         <TouchableOpacity
           style={styles.mainButton}
           onPress={() =>
-            navigation.navigate("PetsList")
+            navigation.navigate(
+              "PetsList"
+            )
           }
         >
-          <Text style={styles.mainButtonText}>
+          <Text
+            style={
+              styles.mainButtonText
+            }
+          >
             Voltar
           </Text>
         </TouchableOpacity>
@@ -345,14 +524,22 @@ export default function PetDetailsScreen({
   }
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+    >
       <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={
+          false
+        }
+        contentContainerStyle={
+          styles.content
+        }
       >
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() =>
+              navigation.goBack()
+            }
           >
             <Ionicons
               name="chevron-back"
@@ -361,15 +548,41 @@ export default function PetDetailsScreen({
             />
           </TouchableOpacity>
 
-          <Text style={styles.title}>
-            Detalhes do Pet
-          </Text>
+          <View style={{ flex: 1 }}>
+            <Text
+              style={styles.title}
+            >
+              Detalhes do Pet
+            </Text>
+
+            <Text
+              style={
+                styles.headerSubtitle
+              }
+            >
+              Informações, saúde e cuidados
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            onPress={
+              refreshDetails
+            }
+          >
+            <Ionicons
+              name="refresh-outline"
+              size={25}
+              color={colors.teal}
+            />
+          </TouchableOpacity>
         </View>
 
         {!editing ? (
           <>
             <View style={styles.card}>
-              <View style={styles.iconBox}>
+              <View
+                style={styles.iconBox}
+              >
                 <MaterialIcons
                   name="pets"
                   size={54}
@@ -377,11 +590,15 @@ export default function PetDetailsScreen({
                 />
               </View>
 
-              <Text style={styles.petName}>
+              <Text
+                style={styles.petName}
+              >
                 {pet.name}
               </Text>
 
-              <View style={styles.infoRow}>
+              <View
+                style={styles.infoRow}
+              >
                 <MaterialIcons
                   name="pets"
                   size={22}
@@ -389,11 +606,19 @@ export default function PetDetailsScreen({
                 />
 
                 <View>
-                  <Text style={styles.infoLabel}>
+                  <Text
+                    style={
+                      styles.infoLabel
+                    }
+                  >
                     Espécie
                   </Text>
 
-                  <Text style={styles.infoText}>
+                  <Text
+                    style={
+                      styles.infoText
+                    }
+                  >
                     {getSpeciesName(
                       pet.species
                     )}
@@ -401,7 +626,9 @@ export default function PetDetailsScreen({
                 </View>
               </View>
 
-              <View style={styles.infoRow}>
+              <View
+                style={styles.infoRow}
+              >
                 <Ionicons
                   name="paw-outline"
                   size={22}
@@ -409,18 +636,28 @@ export default function PetDetailsScreen({
                 />
 
                 <View>
-                  <Text style={styles.infoLabel}>
+                  <Text
+                    style={
+                      styles.infoLabel
+                    }
+                  >
                     Raça
                   </Text>
 
-                  <Text style={styles.infoText}>
+                  <Text
+                    style={
+                      styles.infoText
+                    }
+                  >
                     {pet.breed ||
                       "Não informada"}
                   </Text>
                 </View>
               </View>
 
-              <View style={styles.infoRow}>
+              <View
+                style={styles.infoRow}
+              >
                 <Ionicons
                   name="calendar-outline"
                   size={22}
@@ -428,11 +665,19 @@ export default function PetDetailsScreen({
                 />
 
                 <View>
-                  <Text style={styles.infoLabel}>
+                  <Text
+                    style={
+                      styles.infoLabel
+                    }
+                  >
                     Idade
                   </Text>
 
-                  <Text style={styles.infoText}>
+                  <Text
+                    style={
+                      styles.infoText
+                    }
+                  >
                     {formatAge(
                       pet.ageInMonths
                     )}
@@ -440,7 +685,9 @@ export default function PetDetailsScreen({
                 </View>
               </View>
 
-              <View style={styles.infoRow}>
+              <View
+                style={styles.infoRow}
+              >
                 <Ionicons
                   name="scale-outline"
                   size={22}
@@ -448,11 +695,19 @@ export default function PetDetailsScreen({
                 />
 
                 <View>
-                  <Text style={styles.infoLabel}>
+                  <Text
+                    style={
+                      styles.infoLabel
+                    }
+                  >
                     Peso
                   </Text>
 
-                  <Text style={styles.infoText}>
+                  <Text
+                    style={
+                      styles.infoText
+                    }
+                  >
                     {pet.weight !== null
                       ? `${pet.weight} kg`
                       : "Não informado"}
@@ -460,7 +715,9 @@ export default function PetDetailsScreen({
                 </View>
               </View>
 
-              <View style={styles.infoRow}>
+              <View
+                style={styles.infoRow}
+              >
                 <Ionicons
                   name="person-outline"
                   size={22}
@@ -468,17 +725,27 @@ export default function PetDetailsScreen({
                 />
 
                 <View>
-                  <Text style={styles.infoLabel}>
+                  <Text
+                    style={
+                      styles.infoLabel
+                    }
+                  >
                     Tutor
                   </Text>
 
-                  <Text style={styles.infoText}>
+                  <Text
+                    style={
+                      styles.infoText
+                    }
+                  >
                     {pet.tutorName}
                   </Text>
                 </View>
               </View>
 
-              <View style={styles.infoRow}>
+              <View
+                style={styles.infoRow}
+              >
                 <Ionicons
                   name="call-outline"
                   size={22}
@@ -486,11 +753,19 @@ export default function PetDetailsScreen({
                 />
 
                 <View>
-                  <Text style={styles.infoLabel}>
+                  <Text
+                    style={
+                      styles.infoLabel
+                    }
+                  >
                     Telefone
                   </Text>
 
-                  <Text style={styles.infoText}>
+                  <Text
+                    style={
+                      styles.infoText
+                    }
+                  >
                     {pet.tutorPhone ||
                       "Não informado"}
                   </Text>
@@ -498,9 +773,12 @@ export default function PetDetailsScreen({
               </View>
             </View>
 
-            {session?.role === "TUTOR" && (
+            {session?.role ===
+              "TUTOR" && (
               <TouchableOpacity
-                style={styles.editButton}
+                style={
+                  styles.editButton
+                }
                 onPress={() =>
                   setEditing(true)
                 }
@@ -508,7 +786,9 @@ export default function PetDetailsScreen({
                 <Ionicons
                   name="create-outline"
                   size={21}
-                  color={colors.primary}
+                  color={
+                    colors.primary
+                  }
                 />
 
                 <Text
@@ -521,15 +801,456 @@ export default function PetDetailsScreen({
               </TouchableOpacity>
             )}
 
-            {session?.role === "CLINICA" && (
-              <View style={styles.clinicCard}>
+            <Text
+              style={
+                styles.sectionTitle
+              }
+            >
+              Resumo de saúde
+            </Text>
+
+            {historyLoading ? (
+              <View
+                style={
+                  styles.healthLoading
+                }
+              >
+                <ActivityIndicator
+                  color={colors.teal}
+                />
+
+                <Text
+                  style={
+                    styles.healthLoadingText
+                  }
+                >
+                  Carregando histórico...
+                </Text>
+              </View>
+            ) : historyError ? (
+              <TouchableOpacity
+                style={
+                  styles.historyErrorCard
+                }
+                onPress={() =>
+                  refetchHistory()
+                }
+              >
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={28}
+                  color={colors.teal}
+                />
+
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={
+                      styles.healthErrorTitle
+                    }
+                  >
+                    Não foi possível carregar o histórico.
+                  </Text>
+
+                  <Text
+                    style={
+                      styles.healthErrorText
+                    }
+                  >
+                    Toque para tentar novamente.
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ) : (
+              <>
+                <View
+                  style={
+                    styles.summaryRow
+                  }
+                >
+                  <View
+                    style={
+                      styles.summaryCard
+                    }
+                  >
+                    <Ionicons
+                      name="medical-outline"
+                      size={27}
+                      color={colors.teal}
+                    />
+
+                    <Text
+                      style={
+                        styles.summaryNumber
+                      }
+                    >
+                      {history?.vaccines
+                        .length ?? 0}
+                    </Text>
+
+                    <Text
+                      style={
+                        styles.summaryLabel
+                      }
+                    >
+                      Vacinas
+                    </Text>
+                  </View>
+
+                  <View
+                    style={
+                      styles.summaryCard
+                    }
+                  >
+                    <Ionicons
+                      name="heart-outline"
+                      size={27}
+                      color={colors.teal}
+                    />
+
+                    <Text
+                      style={
+                        styles.summaryNumber
+                      }
+                    >
+                      {history?.routines
+                        .length ?? 0}
+                    </Text>
+
+                    <Text
+                      style={
+                        styles.summaryLabel
+                      }
+                    >
+                      Cuidados
+                    </Text>
+                  </View>
+
+                  <View
+                    style={
+                      styles.summaryCard
+                    }
+                  >
+                    <Ionicons
+                      name="notifications-outline"
+                      size={27}
+                      color={colors.teal}
+                    />
+
+                    <Text
+                      style={
+                        styles.summaryNumber
+                      }
+                    >
+                      {history?.alerts
+                        .length ?? 0}
+                    </Text>
+
+                    <Text
+                      style={
+                        styles.summaryLabel
+                      }
+                    >
+                      Alertas
+                    </Text>
+                  </View>
+                </View>
+
+                <Text
+                  style={
+                    styles.subsectionTitle
+                  }
+                >
+                  Vacinas recentes
+                </Text>
+
+                {recentVaccines.length ===
+                0 ? (
+                  <View
+                    style={
+                      styles.emptySectionCard
+                    }
+                  >
+                    <Text
+                      style={
+                        styles.emptySectionText
+                      }
+                    >
+                      Nenhuma vacina registrada.
+                    </Text>
+                  </View>
+                ) : (
+                  recentVaccines.map(
+                    (vaccine) => (
+                      <View
+                        key={
+                          vaccine.id
+                        }
+                        style={
+                          styles.healthItem
+                        }
+                      >
+                        <View
+                          style={
+                            styles.healthIcon
+                          }
+                        >
+                          <Ionicons
+                            name="medical"
+                            size={20}
+                            color={
+                              colors.white
+                            }
+                          />
+                        </View>
+
+                        <View
+                          style={{
+                            flex: 1,
+                          }}
+                        >
+                          <Text
+                            style={
+                              styles.healthItemTitle
+                            }
+                          >
+                            {
+                              vaccine.name
+                            }
+                          </Text>
+
+                          <Text
+                            style={
+                              styles.healthItemText
+                            }
+                          >
+                            {
+                              vaccineStatusLabels[
+                                vaccine
+                                  .status
+                              ]
+                            }
+                          </Text>
+
+                          <Text
+                            style={
+                              styles.healthItemDate
+                            }
+                          >
+                            {vaccine.applicationDate
+                              ? `Aplicação: ${formatDate(
+                                  vaccine.applicationDate
+                                )}`
+                              : vaccine.dueDate
+                              ? `Vencimento: ${formatDate(
+                                  vaccine.dueDate
+                                )}`
+                              : "Data não informada"}
+                          </Text>
+                        </View>
+                      </View>
+                    )
+                  )
+                )}
+
+                <Text
+                  style={
+                    styles.subsectionTitle
+                  }
+                >
+                  Cuidados recentes
+                </Text>
+
+                {recentRoutines.length ===
+                0 ? (
+                  <View
+                    style={
+                      styles.emptySectionCard
+                    }
+                  >
+                    <Text
+                      style={
+                        styles.emptySectionText
+                      }
+                    >
+                      Nenhum cuidado registrado.
+                    </Text>
+                  </View>
+                ) : (
+                  recentRoutines.map(
+                    (routine: RoutineResponse) => (
+                      <View
+                        key={
+                          routine.id
+                        }
+                        style={
+                          styles.healthItem
+                        }
+                      >
+                        <View
+                          style={
+                            styles.healthIcon
+                          }
+                        >
+                          <Ionicons
+                            name="heart"
+                            size={20}
+                            color={
+                              colors.white
+                            }
+                          />
+                        </View>
+
+                        <View
+                          style={{
+                            flex: 1,
+                          }}
+                        >
+                          <Text
+                            style={
+                              styles.healthItemTitle
+                            }
+                          >
+                            {
+                              routineLabels[
+                                routine
+                                  .type
+                              ]
+                            }
+                          </Text>
+
+                          {routine.description ? (
+                            <Text
+                              style={
+                                styles.healthItemText
+                              }
+                            >
+                              {
+                                routine.description
+                              }
+                            </Text>
+                          ) : null}
+
+                          <Text
+                            style={
+                              styles.healthItemDate
+                            }
+                          >
+                            {formatDate(
+                              routine.recordDate
+                            )}
+                          </Text>
+                        </View>
+                      </View>
+                    )
+                  )
+                )}
+
+                <Text
+                  style={
+                    styles.subsectionTitle
+                  }
+                >
+                  Alertas
+                </Text>
+
+                {recentAlerts.length ===
+                0 ? (
+                  <View
+                    style={
+                      styles.emptySectionCard
+                    }
+                  >
+                    <Text
+                      style={
+                        styles.emptySectionText
+                      }
+                    >
+                      Nenhum alerta registrado.
+                    </Text>
+                  </View>
+                ) : (
+                  recentAlerts.map(
+                    (alert) => (
+                      <View
+                        key={alert.id}
+                        style={
+                          styles.healthItem
+                        }
+                      >
+                        <View
+                          style={[
+                            styles.healthIcon,
+                            styles.alertHealthIcon,
+                          ]}
+                        >
+                          <Ionicons
+                            name="notifications"
+                            size={20}
+                            color={
+                              colors.white
+                            }
+                          />
+                        </View>
+
+                        <View
+                          style={{
+                            flex: 1,
+                          }}
+                        >
+                          <Text
+                            style={
+                              styles.healthItemTitle
+                            }
+                          >
+                            Aviso da clínica
+                          </Text>
+
+                          <Text
+                            style={
+                              styles.healthItemText
+                            }
+                          >
+                            {
+                              alert.message
+                            }
+                          </Text>
+
+                          <Text
+                            style={
+                              styles.healthItemDate
+                            }
+                          >
+                            {formatDate(
+                              alert.dueDate ||
+                                alert.createdAt
+                            )}
+                          </Text>
+                        </View>
+                      </View>
+                    )
+                  )
+                )}
+              </>
+            )}
+
+            {session?.role ===
+              "CLINICA" && (
+              <View
+                style={
+                  styles.clinicCard
+                }
+              >
                 <Ionicons
                   name="medkit-outline"
                   size={25}
                   color={colors.teal}
                 />
 
-                <View style={styles.clinicContent}>
+                <View
+                  style={
+                    styles.clinicContent
+                  }
+                >
                   <Text
                     style={
                       styles.clinicTitle
@@ -543,19 +1264,42 @@ export default function PetDetailsScreen({
                       styles.clinicText
                     }
                   >
-                    Você pode consultar os
-                    dados deste pet. O
-                    gerenciamento de vacinas
-                    será disponibilizado nesta
-                    área.
+                    Consulte os dados, vacinas,
+                    cuidados e alertas deste pet.
+                    O cadastro e a edição de
+                    vacinas continuam disponíveis
+                    na área de Vacinas.
                   </Text>
+
+                  <TouchableOpacity
+                    style={
+                      styles.clinicVaccineButton
+                    }
+                    onPress={() =>
+                      navigation.navigate(
+                        "Vaccines"
+                      )
+                    }
+                  >
+                    <Text
+                      style={
+                        styles.clinicVaccineButtonText
+                      }
+                    >
+                      Gerenciar vacinas
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
           </>
         ) : (
           <View style={styles.card}>
-            <Text style={styles.editTitle}>
+            <Text
+              style={
+                styles.editTitle
+              }
+            >
               Editar Pet
             </Text>
 
@@ -630,7 +1374,9 @@ export default function PetDetailsScreen({
             <TextInput
               style={styles.input}
               value={birthDate}
-              onChangeText={setBirthDate}
+              onChangeText={
+                setBirthDate
+              }
               placeholder="AAAA-MM-DD"
               keyboardType="numbers-and-punctuation"
             />
@@ -654,13 +1400,19 @@ export default function PetDetailsScreen({
             <TextInput
               style={styles.input}
               value={tutorPhone}
-              onChangeText={setTutorPhone}
+              onChangeText={
+                setTutorPhone
+              }
               placeholder="Telefone"
               keyboardType="phone-pad"
             />
 
             {formError ? (
-              <Text style={styles.formError}>
+              <Text
+                style={
+                  styles.formError
+                }
+              >
                 {formError}
               </Text>
             ) : null}
@@ -669,17 +1421,17 @@ export default function PetDetailsScreen({
               style={[
                 styles.saveButton,
 
-                updateMutation.isPending &&
+                isUpdatingPet &&
                   styles.disabledButton,
               ]}
               onPress={handleUpdate}
-              disabled={
-                updateMutation.isPending
-              }
+              disabled={isUpdatingPet}
             >
-              {updateMutation.isPending ? (
+              {isUpdatingPet ? (
                 <ActivityIndicator
-                  color={colors.primary}
+                  color={
+                    colors.primary
+                  }
                 />
               ) : (
                 <Text
@@ -693,11 +1445,13 @@ export default function PetDetailsScreen({
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={handleCancelEdit}
-              disabled={
-                updateMutation.isPending
+              style={
+                styles.cancelButton
               }
+              onPress={
+                handleCancelEdit
+              }
+              disabled={isUpdatingPet}
             >
               <Text
                 style={
@@ -746,9 +1500,15 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
 
+  headerSubtitle: {
+    color: colors.mint,
+    fontSize: 12,
+    marginTop: 2,
+  },
+
   title: {
     color: colors.white,
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: "800",
   },
 
@@ -812,6 +1572,139 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: 16,
     fontWeight: "800",
+  },
+
+  sectionTitle: {
+    color: colors.white,
+    fontSize: 21,
+    fontWeight: "800",
+    marginTop: 28,
+    marginBottom: 14,
+  },
+
+  healthLoading: {
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    padding: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+
+  healthLoadingText: {
+    color: colors.primary,
+    fontSize: 13,
+  },
+
+  historyErrorCard: {
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    padding: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+
+  healthErrorTitle: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+
+  healthErrorText: {
+    color: colors.gray,
+    fontSize: 12,
+    marginTop: 3,
+  },
+
+  summaryRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+
+  summaryCard: {
+    flex: 1,
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    alignItems: "center",
+  },
+
+  summaryNumber: {
+    color: colors.primary,
+    fontSize: 24,
+    fontWeight: "800",
+    marginTop: 7,
+  },
+
+  summaryLabel: {
+    color: colors.gray,
+    fontSize: 11,
+    fontWeight: "700",
+    marginTop: 2,
+  },
+
+  subsectionTitle: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: "800",
+    marginTop: 22,
+    marginBottom: 10,
+  },
+
+  healthItem: {
+    backgroundColor: colors.white,
+    borderRadius: 17,
+    padding: 14,
+    flexDirection: "row",
+    gap: 11,
+    marginBottom: 9,
+  },
+
+  healthIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.teal,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  alertHealthIcon: {
+    backgroundColor: "#C62828",
+  },
+
+  healthItemTitle: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+
+  healthItemText: {
+    color: colors.gray,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 3,
+  },
+
+  healthItemDate: {
+    color: colors.teal,
+    fontSize: 11,
+    fontWeight: "700",
+    marginTop: 5,
+  },
+
+  emptySectionCard: {
+    backgroundColor: colors.white,
+    borderRadius: 17,
+    padding: 16,
+  },
+
+  emptySectionText: {
+    color: colors.gray,
+    fontSize: 13,
+    textAlign: "center",
   },
 
   editTitle: {
@@ -941,7 +1834,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.mint,
     borderRadius: 20,
     padding: 18,
-    marginTop: 18,
+    marginTop: 22,
     flexDirection: "row",
     gap: 12,
   },
@@ -961,5 +1854,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
     marginTop: 4,
+  },
+
+  clinicVaccineButton: {
+    alignSelf: "flex-start",
+    backgroundColor: colors.teal,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginTop: 12,
+  },
+
+  clinicVaccineButtonText: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: "800",
   },
 });
