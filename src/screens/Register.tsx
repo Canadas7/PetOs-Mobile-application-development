@@ -9,7 +9,9 @@ import {
   ActivityIndicator,
 } from "react-native";
 
-import colors from "../styles/colors";
+import type { ThemeColors } from "../styles/colors";
+import { useTheme } from "../hooks/useTheme";
+import { useThemedStyles } from "../hooks/useThemedStyles";
 
 import {
   UserRole,
@@ -20,6 +22,8 @@ import { useRegister } from "../hooks/useRegister";
 export default function RegisterScreen({
   navigation,
 }: any) {
+  const { colors, mode } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const [name, setName] =
     useState("");
 
@@ -108,20 +112,22 @@ export default function RegisterScreen({
       </Text>
 
       <TextInput
+        keyboardAppearance={mode}
         style={styles.input}
         placeholder="Digite seu nome"
         placeholderTextColor={
-          colors.gray
+          colors.textSecondary
         }
         value={name}
         onChangeText={setName}
       />
 
       <TextInput
+        keyboardAppearance={mode}
         style={styles.input}
         placeholder="Digite seu e-mail"
         placeholderTextColor={
-          colors.gray
+          colors.textSecondary
         }
         value={email}
         onChangeText={setEmail}
@@ -131,10 +137,11 @@ export default function RegisterScreen({
       />
 
       <TextInput
+        keyboardAppearance={mode}
         style={styles.input}
         placeholder="Crie uma senha"
         placeholderTextColor={
-          colors.gray
+          colors.textSecondary
         }
         value={password}
         onChangeText={setPassword}
@@ -211,7 +218,7 @@ export default function RegisterScreen({
       >
         {isRegistering ? (
           <ActivityIndicator
-            color={colors.primary}
+            color={colors.onAccent}
           />
         ) : (
           <Text
@@ -253,36 +260,37 @@ export default function RegisterScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.background,
     padding: 24,
     justifyContent: "center",
   },
 
   logo: {
-    color: colors.teal,
+    color: colors.accentText,
     fontSize: 42,
     fontWeight: "800",
     marginBottom: 28,
   },
 
   title: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 30,
     fontWeight: "800",
   },
 
   subtitle: {
-    color: colors.mint,
+    color: colors.textSecondary,
     fontSize: 15,
     marginTop: 8,
     marginBottom: 24,
   },
 
   input: {
-    backgroundColor: colors.white,
+    color: colors.text,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     fontSize: 16,
@@ -290,7 +298,7 @@ const styles = StyleSheet.create({
   },
 
   roleTitle: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 15,
     fontWeight: "700",
     marginTop: 4,
@@ -305,7 +313,7 @@ const styles = StyleSheet.create({
 
   roleButton: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     paddingVertical: 14,
     paddingHorizontal: 8,
     borderRadius: 14,
@@ -315,29 +323,29 @@ const styles = StyleSheet.create({
   },
 
   roleButtonSelected: {
-    backgroundColor: colors.teal,
-    borderColor: colors.white,
+    backgroundColor: colors.accent,
+    borderColor: colors.border,
   },
 
   roleText: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 14,
     fontWeight: "700",
     textAlign: "center",
   },
 
   roleTextSelected: {
-    color: colors.white,
+    color: colors.onAccent,
   },
 
   error: {
-    color: "#FFB4B4",
+    color: colors.dangerText,
     fontSize: 14,
     marginBottom: 12,
   },
 
   button: {
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     padding: 16,
     borderRadius: 16,
     alignItems: "center",
@@ -348,7 +356,7 @@ const styles = StyleSheet.create({
   },
 
   buttonText: {
-    color: colors.primary,
+    color: colors.onAccent,
     fontSize: 16,
     fontWeight: "800",
   },
@@ -359,12 +367,12 @@ const styles = StyleSheet.create({
   },
 
   loginText: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 14,
   },
 
   loginLink: {
-    color: colors.teal,
+    color: colors.accentText,
     fontSize: 15,
     fontWeight: "800",
     marginTop: 6,

@@ -13,7 +13,9 @@ import {
 
 import { Ionicons } from "@expo/vector-icons";
 
-import colors from "../styles/colors";
+import type { ThemeColors } from "../styles/colors";
+import { useTheme } from "../hooks/useTheme";
+import { useThemedStyles } from "../hooks/useThemedStyles";
 
 import {
   Species,
@@ -39,6 +41,8 @@ const speciesOptions: {
 export default function PetRegisterScreen({
   navigation,
 }: any) {
+  const { colors, mode } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const { session } = useAuth();
 
   const {
@@ -188,7 +192,7 @@ export default function PetRegisterScreen({
         <Ionicons
           name="lock-closed-outline"
           size={60}
-          color={colors.teal}
+          color={colors.accentText}
         />
 
         <Text style={styles.restrictedTitle}>
@@ -226,7 +230,7 @@ export default function PetRegisterScreen({
           <Ionicons
             name="chevron-back"
             size={28}
-            color={colors.white}
+            color={colors.text}
           />
         </TouchableOpacity>
 
@@ -247,9 +251,10 @@ export default function PetRegisterScreen({
         </Text>
 
         <TextInput
+        keyboardAppearance={mode}
           style={styles.input}
           placeholder="Ex: Thor"
-          placeholderTextColor={colors.gray}
+          placeholderTextColor={colors.textSecondary}
           value={name}
           onChangeText={setName}
           maxLength={100}
@@ -290,9 +295,10 @@ export default function PetRegisterScreen({
         </Text>
 
         <TextInput
+        keyboardAppearance={mode}
           style={styles.input}
           placeholder="Ex: Golden Retriever"
-          placeholderTextColor={colors.gray}
+          placeholderTextColor={colors.textSecondary}
           value={breed}
           onChangeText={setBreed}
           maxLength={100}
@@ -303,9 +309,10 @@ export default function PetRegisterScreen({
         </Text>
 
         <TextInput
+        keyboardAppearance={mode}
           style={styles.input}
           placeholder="AAAA-MM-DD"
-          placeholderTextColor={colors.gray}
+          placeholderTextColor={colors.textSecondary}
           value={birthDate}
           onChangeText={setBirthDate}
           keyboardType="numbers-and-punctuation"
@@ -320,9 +327,10 @@ export default function PetRegisterScreen({
         </Text>
 
         <TextInput
+        keyboardAppearance={mode}
           style={styles.input}
           placeholder="Ex: 12,5"
-          placeholderTextColor={colors.gray}
+          placeholderTextColor={colors.textSecondary}
           value={weight}
           onChangeText={setWeight}
           keyboardType="decimal-pad"
@@ -336,7 +344,7 @@ export default function PetRegisterScreen({
           <Ionicons
             name="person-outline"
             size={20}
-            color={colors.teal}
+            color={colors.accentText}
           />
 
           <Text style={styles.readOnlyText}>
@@ -349,9 +357,10 @@ export default function PetRegisterScreen({
         </Text>
 
         <TextInput
+        keyboardAppearance={mode}
           style={styles.input}
           placeholder="Ex: (11) 99999-9999"
-          placeholderTextColor={colors.gray}
+          placeholderTextColor={colors.textSecondary}
           value={tutorPhone}
           onChangeText={setTutorPhone}
           keyboardType="phone-pad"
@@ -363,7 +372,7 @@ export default function PetRegisterScreen({
             <Ionicons
               name="alert-circle-outline"
               size={20}
-              color="#C62828"
+              color={colors.dangerText}
             />
 
             <Text style={styles.error}>
@@ -383,14 +392,14 @@ export default function PetRegisterScreen({
         >
           {isCreatingPet ? (
             <ActivityIndicator
-              color={colors.primary}
+              color={colors.onAccent}
             />
           ) : (
             <>
               <Ionicons
                 name="paw-outline"
                 size={21}
-                color={colors.primary}
+                color={colors.onAccent}
               />
 
               <Text style={styles.registerButtonText}>
@@ -404,10 +413,10 @@ export default function PetRegisterScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.background,
   },
 
   content: {
@@ -432,25 +441,25 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 28,
     fontWeight: "800",
   },
 
   subtitle: {
-    color: colors.mint,
+    color: colors.textSecondary,
     fontSize: 14,
     marginTop: 4,
   },
 
   card: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 24,
     padding: 20,
   },
 
   label: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 14,
     fontWeight: "700",
     marginBottom: 8,
@@ -458,17 +467,17 @@ const styles = StyleSheet.create({
   },
 
   input: {
-    backgroundColor: "#F5F5F5",
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    color: colors.primary,
+    color: colors.text,
     marginBottom: 14,
   },
 
   helper: {
-    color: colors.gray,
+    color: colors.textSecondary,
     fontSize: 12,
     marginTop: -8,
     marginBottom: 14,
@@ -485,28 +494,28 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 13,
     borderRadius: 12,
-    backgroundColor: "#F3F3F3",
+    backgroundColor: colors.surfaceMuted,
     borderWidth: 1,
-    borderColor: "#E5E5E5",
+    borderColor: colors.border,
   },
 
   speciesButtonSelected: {
-    backgroundColor: colors.teal,
-    borderColor: colors.teal,
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
 
   speciesText: {
-    color: colors.primary,
+    color: colors.text,
     fontWeight: "600",
     fontSize: 13,
   },
 
   speciesTextSelected: {
-    color: colors.white,
+    color: colors.onAccent,
   },
 
   readOnlyInput: {
-    backgroundColor: "#F5F5F5",
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -517,7 +526,7 @@ const styles = StyleSheet.create({
   },
 
   readOnlyText: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 16,
     fontWeight: "600",
   },
@@ -526,7 +535,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "#FFEBEE",
+    backgroundColor: colors.dangerSurface,
     padding: 12,
     borderRadius: 12,
     marginTop: 4,
@@ -534,13 +543,13 @@ const styles = StyleSheet.create({
   },
 
   error: {
-    color: "#C62828",
+    color: colors.dangerText,
     flex: 1,
     fontSize: 13,
   },
 
   registerButton: {
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     borderRadius: 16,
     padding: 16,
     alignItems: "center",
@@ -551,7 +560,7 @@ const styles = StyleSheet.create({
   },
 
   registerButtonText: {
-    color: colors.primary,
+    color: colors.onAccent,
     fontSize: 16,
     fontWeight: "800",
   },
@@ -562,21 +571,21 @@ const styles = StyleSheet.create({
 
   restrictedContainer: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.background,
     alignItems: "center",
     justifyContent: "center",
     padding: 30,
   },
 
   restrictedTitle: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 26,
     fontWeight: "800",
     marginTop: 18,
   },
 
   restrictedText: {
-    color: colors.mint,
+    color: colors.textSecondary,
     textAlign: "center",
     fontSize: 15,
     lineHeight: 22,
@@ -585,14 +594,14 @@ const styles = StyleSheet.create({
   },
 
   backButton: {
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     paddingVertical: 14,
     paddingHorizontal: 30,
     borderRadius: 14,
   },
 
   backButtonText: {
-    color: colors.primary,
+    color: colors.onAccent,
     fontSize: 15,
     fontWeight: "800",
   },

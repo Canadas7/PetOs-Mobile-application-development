@@ -10,7 +10,9 @@ import {
   Alert,
 } from "react-native";
 
-import colors from "../styles/colors";
+import type { ThemeColors } from "../styles/colors";
+import { useTheme } from "../hooks/useTheme";
+import { useThemedStyles } from "../hooks/useThemedStyles";
 
 import {
   PetResponse,
@@ -23,6 +25,8 @@ import { usePets } from "../hooks/usePets";
 export default function PetsListScreen({
   navigation,
 }: any) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const { session } = useAuth();
 
   const {
@@ -133,7 +137,7 @@ export default function PetsListScreen({
       <View style={styles.loadingContainer}>
         <ActivityIndicator
           size="large"
-          color={colors.teal}
+          color={colors.accentText}
         />
 
         <Text style={styles.loadingText}>
@@ -310,36 +314,36 @@ export default function PetsListScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.background,
     padding: 24,
     paddingTop: 50,
   },
 
   loadingContainer: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.background,
     padding: 24,
     alignItems: "center",
     justifyContent: "center",
   },
 
   loadingText: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 15,
     marginTop: 14,
   },
 
   title: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 30,
     fontWeight: "800",
   },
 
   subtitle: {
-    color: colors.mint,
+    color: colors.textSecondary,
     fontSize: 14,
     marginTop: 6,
     marginBottom: 24,
@@ -352,14 +356,14 @@ const styles = StyleSheet.create({
   },
 
   emptyText: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 16,
     marginBottom: 20,
     textAlign: "center",
   },
 
   button: {
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     padding: 16,
     borderRadius: 16,
     width: "100%",
@@ -368,7 +372,7 @@ const styles = StyleSheet.create({
   },
 
   buttonText: {
-    color: colors.primary,
+    color: colors.onAccent,
     fontWeight: "800",
     fontSize: 16,
   },
@@ -378,32 +382,32 @@ const styles = StyleSheet.create({
   },
 
   petCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 18,
     marginBottom: 14,
   },
 
   petName: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 22,
     fontWeight: "800",
   },
 
   petInfo: {
-    color: colors.gray,
+    color: colors.textSecondary,
     marginTop: 6,
     fontSize: 14,
   },
 
   petAge: {
-    color: colors.teal,
+    color: colors.accentText,
     marginTop: 10,
     fontWeight: "700",
   },
 
   tutor: {
-    color: colors.gray,
+    color: colors.textSecondary,
     marginTop: 8,
     fontSize: 13,
   },
@@ -417,7 +421,7 @@ const styles = StyleSheet.create({
   },
 
   deleteButtonText: {
-    color: colors.white,
+    color: colors.onDanger,
     fontWeight: "800",
   },
 
@@ -426,7 +430,7 @@ const styles = StyleSheet.create({
   },
 
   addButton: {
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     borderRadius: 16,
     padding: 14,
     alignItems: "center",
@@ -434,20 +438,20 @@ const styles = StyleSheet.create({
   },
 
   addButtonText: {
-    color: colors.primary,
+    color: colors.onAccent,
     fontWeight: "800",
     fontSize: 15,
   },
 
   errorTitle: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 20,
     fontWeight: "800",
     textAlign: "center",
   },
 
   errorText: {
-    color: colors.mint,
+    color: colors.textSecondary,
     fontSize: 14,
     textAlign: "center",
     marginTop: 10,

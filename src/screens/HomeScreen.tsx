@@ -19,7 +19,9 @@ import {
   MaterialIcons,
 } from "@expo/vector-icons";
 
-import colors from "../styles/colors";
+import type { ThemeColors } from "../styles/colors";
+import { useTheme } from "../hooks/useTheme";
+import { useThemedStyles } from "../hooks/useThemedStyles";
 import BottomNavigation from "../components/BottomNavigation";
 
 import {
@@ -38,6 +40,8 @@ import ClinicHomeScreen from "./ClinicHomeScreen";
 export default function HomeScreen({
   navigation,
 }: any) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const { session } = useAuth();
 
   const pendingPetIdRef =
@@ -349,7 +353,7 @@ export default function HomeScreen({
             <MaterialIcons
               name="pets"
               size={34}
-              color={colors.teal}
+              color={colors.accentText}
             />
 
             <Text
@@ -412,7 +416,7 @@ export default function HomeScreen({
             <ActivityIndicator
               size="large"
               color={
-                colors.teal
+                colors.accentText
               }
             />
 
@@ -435,7 +439,7 @@ export default function HomeScreen({
               name="alert-circle-outline"
               size={36}
               color={
-                colors.teal
+                colors.accentText
               }
             />
 
@@ -509,7 +513,7 @@ export default function HomeScreen({
                   name="pets"
                   size={16}
                   color={
-                    colors.white
+                    colors.onAccent
                   }
                 />
 
@@ -537,7 +541,7 @@ export default function HomeScreen({
                   name="calendar-outline"
                   size={16}
                   color={
-                    colors.white
+                    colors.onAccent
                   }
                 />
 
@@ -562,7 +566,7 @@ export default function HomeScreen({
                 name="pets"
                 size={62}
                 color={
-                  colors.white
+                  colors.onAccent
                 }
               />
             </View>
@@ -576,7 +580,7 @@ export default function HomeScreen({
                 name="chevron-forward"
                 size={22}
                 color={
-                  colors.primary
+                  colors.onAccent
                 }
               />
             </View>
@@ -601,7 +605,7 @@ export default function HomeScreen({
                 name="pets"
                 size={32}
                 color={
-                  colors.teal
+                  colors.accentText
                 }
               />
             </View>
@@ -662,7 +666,7 @@ export default function HomeScreen({
                   name="pets"
                   size={31}
                   color={
-                    colors.teal
+                    colors.accentText
                   }
                 />
               </View>
@@ -747,7 +751,7 @@ export default function HomeScreen({
                   name="person-outline"
                   size={30}
                   color={
-                    colors.teal
+                    colors.accentText
                   }
                 />
               </View>
@@ -784,7 +788,7 @@ export default function HomeScreen({
                 name="notifications"
                 size={23}
                 color={
-                  colors.teal
+                  colors.accentText
                 }
               />
 
@@ -808,7 +812,7 @@ export default function HomeScreen({
             >
               <ActivityIndicator
                 color={
-                  colors.teal
+                  colors.accentText
                 }
               />
 
@@ -843,7 +847,7 @@ export default function HomeScreen({
                   name="medical"
                   size={24}
                   color={
-                    colors.white
+                    vaccineAlert.type === "VACCINE_OVERDUE" ? colors.onDanger : colors.onAccent
                   }
                 />
               </View>
@@ -906,7 +910,7 @@ export default function HomeScreen({
                   name="medical"
                   size={24}
                   color={
-                    colors.white
+                    colors.onAccent
                   }
                 />
               </View>
@@ -981,7 +985,7 @@ export default function HomeScreen({
                   name="shield-checkmark-outline"
                   size={26}
                   color={
-                    colors.teal
+                    colors.accentText
                   }
                 />
               </View>
@@ -1026,7 +1030,7 @@ export default function HomeScreen({
               name="refresh-outline"
               size={17}
               color={
-                colors.teal
+                colors.accentText
               }
             />
 
@@ -1051,12 +1055,10 @@ export default function HomeScreen({
   );
 }
 
-const styles =
-  StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor:
-        colors.primary,
+      backgroundColor: colors.background,
     },
 
     scrollContent: {
@@ -1079,7 +1081,7 @@ const styles =
     },
 
     logo: {
-      color: colors.white,
+      color: colors.text,
       fontSize: 28,
       fontWeight: "800",
     },
@@ -1088,17 +1090,15 @@ const styles =
       width: 42,
       height: 42,
       borderRadius: 21,
-      backgroundColor:
-        colors.teal,
+      backgroundColor: colors.accent,
       alignItems: "center",
       justifyContent: "center",
       borderWidth: 2,
-      borderColor:
-        colors.white,
+      borderColor: colors.border,
     },
 
     avatarText: {
-      color: colors.primary,
+      color: colors.onAccent,
       fontWeight: "800",
     },
 
@@ -1108,20 +1108,19 @@ const styles =
     },
 
     title: {
-      color: colors.white,
+      color: colors.text,
       fontSize: 25,
       fontWeight: "800",
     },
 
     subtitle: {
-      color: colors.mint,
+      color: colors.textSecondary,
       fontSize: 14,
       marginTop: 4,
     },
 
     petCard: {
-      backgroundColor:
-        colors.teal,
+      backgroundColor: colors.accent,
       borderRadius: 22,
       padding: 20,
       minHeight: 160,
@@ -1138,13 +1137,13 @@ const styles =
     },
 
     petLabel: {
-      color: colors.white,
+      color: colors.onAccent,
       fontSize: 15,
       fontWeight: "600",
     },
 
     petName: {
-      color: colors.white,
+      color: colors.onAccent,
       fontSize: 40,
       fontWeight: "800",
       marginVertical: 8,
@@ -1158,7 +1157,7 @@ const styles =
     },
 
     petInfo: {
-      color: colors.white,
+      color: colors.onAccent,
       fontSize: 13,
       flexShrink: 1,
     },
@@ -1167,8 +1166,7 @@ const styles =
       width: 106,
       height: 106,
       borderRadius: 53,
-      backgroundColor:
-        "rgba(255,255,255,0.20)",
+      backgroundColor: colors.accentOverlay,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -1180,15 +1178,13 @@ const styles =
       width: 34,
       height: 34,
       borderRadius: 17,
-      backgroundColor:
-        "rgba(255,255,255,0.70)",
+      backgroundColor: colors.accentOverlay,
       alignItems: "center",
       justifyContent: "center",
     },
 
     emptyPetCard: {
-      backgroundColor:
-        colors.white,
+      backgroundColor: colors.surface,
       borderRadius: 22,
       padding: 24,
     },
@@ -1197,56 +1193,53 @@ const styles =
       width: 55,
       height: 55,
       borderRadius: 28,
-      backgroundColor:
-        colors.mint,
+      backgroundColor: colors.successSurface,
       alignItems: "center",
       justifyContent: "center",
       marginBottom: 15,
     },
 
     emptyPetTitle: {
-      color: colors.primary,
+      color: colors.text,
       fontSize: 22,
       fontWeight: "800",
     },
 
     emptyPetText: {
-      color: colors.gray,
+      color: colors.textSecondary,
       fontSize: 14,
       marginTop: 8,
     },
 
     emptyPetAction: {
-      color: colors.teal,
+      color: colors.accentText,
       fontSize: 14,
       fontWeight: "800",
       marginTop: 16,
     },
 
     loadingCard: {
-      backgroundColor:
-        colors.white,
+      backgroundColor: colors.surface,
       borderRadius: 22,
       padding: 28,
       alignItems: "center",
     },
 
     loadingText: {
-      color: colors.primary,
+      color: colors.text,
       fontSize: 14,
       marginTop: 12,
     },
 
     errorCard: {
-      backgroundColor:
-        colors.white,
+      backgroundColor: colors.surface,
       borderRadius: 22,
       padding: 24,
       alignItems: "center",
     },
 
     errorTitle: {
-      color: colors.primary,
+      color: colors.text,
       fontSize: 15,
       fontWeight: "700",
       textAlign: "center",
@@ -1254,8 +1247,7 @@ const styles =
     },
 
     retryButton: {
-      backgroundColor:
-        colors.teal,
+      backgroundColor: colors.accent,
       paddingVertical: 10,
       paddingHorizontal: 20,
       borderRadius: 12,
@@ -1263,13 +1255,12 @@ const styles =
     },
 
     retryButtonText: {
-      color: colors.primary,
+      color: colors.onAccent,
       fontWeight: "800",
     },
 
     whitePanel: {
-      backgroundColor:
-        colors.white,
+      backgroundColor: colors.surface,
       borderRadius: 28,
       padding: 16,
       marginTop: 18,
@@ -1282,23 +1273,21 @@ const styles =
 
     actionCard: {
       flex: 1,
-      backgroundColor:
-        colors.white,
+      backgroundColor: colors.surface,
       borderRadius: 16,
       paddingVertical: 16,
       paddingHorizontal: 8,
       alignItems: "center",
       elevation: 3,
       borderWidth: 1,
-      borderColor: "#EEF2F7",
+      borderColor: colors.border,
     },
 
     iconCircle: {
       width: 62,
       height: 62,
       borderRadius: 31,
-      backgroundColor:
-        colors.mint,
+      backgroundColor: colors.successSurface,
       alignItems: "center",
       justifyContent: "center",
       marginBottom: 10,
@@ -1308,21 +1297,20 @@ const styles =
       width: 62,
       height: 62,
       borderRadius: 31,
-      backgroundColor:
-        "#E8F2FF",
+      backgroundColor: colors.infoSurface,
       alignItems: "center",
       justifyContent: "center",
       marginBottom: 10,
     },
 
     cardTitle: {
-      color: colors.primary,
+      color: colors.text,
       fontWeight: "800",
       fontSize: 14,
     },
 
     cardSub: {
-      color: colors.gray,
+      color: colors.textSecondary,
       fontSize: 11,
       marginTop: 4,
       textAlign: "center",
@@ -1340,44 +1328,39 @@ const styles =
     },
 
     alertTitle: {
-      color: colors.primary,
+      color: colors.text,
       fontSize: 18,
       fontWeight: "800",
       flexShrink: 1,
     },
 
     alertCard: {
-      backgroundColor:
-        colors.mint,
+      backgroundColor: colors.successSurface,
       borderRadius: 16,
       padding: 16,
       flexDirection: "row",
       alignItems: "center",
       gap: 12,
       borderWidth: 1,
-      borderColor: "#BDEFE4",
+      borderColor: colors.successBorder,
     },
 
     overdueCard: {
-      backgroundColor:
-        "#FFF1F1",
-      borderColor:
-        "#FFD1D1",
+      backgroundColor: colors.dangerSurface,
+      borderColor: colors.dangerBorder,
     },
 
     alertIcon: {
       width: 50,
       height: 50,
       borderRadius: 25,
-      backgroundColor:
-        colors.teal,
+      backgroundColor: colors.accent,
       alignItems: "center",
       justifyContent: "center",
     },
 
     overdueIcon: {
-      backgroundColor:
-        "#C62828",
+      backgroundColor: colors.danger,
     },
 
     alertContent: {
@@ -1385,28 +1368,27 @@ const styles =
     },
 
     alertPet: {
-      color: colors.primary,
+      color: colors.text,
       fontSize: 15,
       fontWeight: "800",
     },
 
     alertMessage: {
-      color: colors.primary,
+      color: colors.text,
       fontSize: 13,
       lineHeight: 18,
       marginTop: 3,
     },
 
     alertDate: {
-      color: colors.gray,
+      color: colors.textSecondary,
       fontSize: 12,
       fontWeight: "700",
       marginTop: 6,
     },
 
     alertLoading: {
-      backgroundColor:
-        colors.mint,
+      backgroundColor: colors.successSurface,
       borderRadius: 16,
       padding: 20,
       flexDirection: "row",
@@ -1415,13 +1397,12 @@ const styles =
     },
 
     alertLoadingText: {
-      color: colors.primary,
+      color: colors.text,
       fontSize: 13,
     },
 
     noAlertCard: {
-      backgroundColor:
-        colors.mint,
+      backgroundColor: colors.successSurface,
       borderRadius: 16,
       padding: 16,
       flexDirection: "row",
@@ -1433,20 +1414,19 @@ const styles =
       width: 50,
       height: 50,
       borderRadius: 25,
-      backgroundColor:
-        colors.white,
+      backgroundColor: colors.surface,
       alignItems: "center",
       justifyContent: "center",
     },
 
     noAlertTitle: {
-      color: colors.primary,
+      color: colors.text,
       fontSize: 15,
       fontWeight: "800",
     },
 
     noAlertText: {
-      color: colors.gray,
+      color: colors.textSecondary,
       fontSize: 13,
       marginTop: 3,
       lineHeight: 18,
@@ -1462,7 +1442,7 @@ const styles =
     },
 
     refreshAlertsText: {
-      color: colors.teal,
+      color: colors.accentText,
       fontSize: 12,
       fontWeight: "700",
     },

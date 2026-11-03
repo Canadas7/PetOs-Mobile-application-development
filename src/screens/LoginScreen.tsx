@@ -9,12 +9,16 @@ import {
   ActivityIndicator,
 } from "react-native";
 
-import colors from "../styles/colors";
+import type { ThemeColors } from "../styles/colors";
+import { useTheme } from "../hooks/useTheme";
+import { useThemedStyles } from "../hooks/useThemedStyles";
 import { useLogin } from "../hooks/useLogin";
 
 export default function LoginScreen({
   navigation,
 }: any) {
+  const { colors, mode } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const [email, setEmail] =
     useState("");
 
@@ -77,10 +81,11 @@ export default function LoginScreen({
       </Text>
 
       <TextInput
+        keyboardAppearance={mode}
         style={styles.input}
         placeholder="Digite seu e-mail"
         placeholderTextColor={
-          colors.gray
+          colors.textSecondary
         }
         value={email}
         onChangeText={setEmail}
@@ -90,10 +95,11 @@ export default function LoginScreen({
       />
 
       <TextInput
+        keyboardAppearance={mode}
         style={styles.input}
         placeholder="Digite sua senha"
         placeholderTextColor={
-          colors.gray
+          colors.textSecondary
         }
         secureTextEntry
         value={password}
@@ -117,7 +123,7 @@ export default function LoginScreen({
       >
         {isLoggingIn ? (
           <ActivityIndicator
-            color={colors.primary}
+            color={colors.onAccent}
           />
         ) : (
           <Text
@@ -163,36 +169,37 @@ export default function LoginScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.background,
     padding: 24,
     justifyContent: "center",
   },
 
   logo: {
-    color: colors.teal,
+    color: colors.accentText,
     fontSize: 42,
     fontWeight: "800",
     marginBottom: 40,
   },
 
   title: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 30,
     fontWeight: "800",
   },
 
   subtitle: {
-    color: colors.mint,
+    color: colors.textSecondary,
     fontSize: 15,
     marginTop: 8,
     marginBottom: 28,
   },
 
   input: {
-    backgroundColor: colors.white,
+    color: colors.text,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     fontSize: 16,
@@ -200,13 +207,13 @@ const styles = StyleSheet.create({
   },
 
   error: {
-    color: "#FFB4B4",
+    color: colors.dangerText,
     fontSize: 14,
     marginBottom: 14,
   },
 
   button: {
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     padding: 16,
     borderRadius: 16,
     alignItems: "center",
@@ -218,7 +225,7 @@ const styles = StyleSheet.create({
   },
 
   buttonText: {
-    color: colors.primary,
+    color: colors.onAccent,
     fontSize: 16,
     fontWeight: "800",
   },
@@ -229,12 +236,12 @@ const styles = StyleSheet.create({
   },
 
   registerText: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 14,
   },
 
   registerLink: {
-    color: colors.teal,
+    color: colors.accentText,
     fontSize: 15,
     fontWeight: "800",
     marginTop: 6,

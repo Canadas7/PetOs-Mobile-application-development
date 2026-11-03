@@ -15,7 +15,9 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 
 
-import colors from "../styles/colors";
+import type { ThemeColors } from "../styles/colors";
+import { useTheme } from "../hooks/useTheme";
+import { useThemedStyles } from "../hooks/useThemedStyles";
 
 import BottomNavigation from "../components/BottomNavigation";
 
@@ -38,6 +40,8 @@ import { useAuth } from "../contexts/AuthContext";
 export default function VaccinesScreen({
   navigation,
 }: any) {
+  const { colors, mode } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const { session } = useAuth();
 
   const scrollRef = useRef<ScrollViewInstance>(null);
@@ -328,7 +332,7 @@ export default function VaccinesScreen({
         <Ionicons
           name="lock-closed-outline"
           size={58}
-          color={colors.teal}
+          color={colors.accentText}
         />
 
         <Text
@@ -378,7 +382,7 @@ export default function VaccinesScreen({
 
         {petsLoading ? (
           <ActivityIndicator
-            color={colors.teal}
+            color={colors.accentText}
           />
         ) : (
           <ScrollView
@@ -413,8 +417,8 @@ export default function VaccinesScreen({
                     size={18}
                     color={
                       selected
-                        ? colors.primary
-                        : colors.teal
+                        ? colors.onAccent
+                        : colors.accentText
                     }
                   />
 
@@ -447,7 +451,7 @@ export default function VaccinesScreen({
                   <Ionicons
                     name="create-outline"
                     size={18}
-                    color={colors.primary}
+                    color={colors.text}
                   />
 
                   <Text style={styles.editingNoticeText}>
@@ -461,10 +465,11 @@ export default function VaccinesScreen({
               </Text>
 
               <TextInput
+        keyboardAppearance={mode}
                 style={styles.input}
                 placeholder="Ex: V10"
                 placeholderTextColor={
-                  colors.gray
+                  colors.textSecondary
                 }
                 value={name}
                 onChangeText={setName}
@@ -475,10 +480,11 @@ export default function VaccinesScreen({
               </Text>
 
               <TextInput
+        keyboardAppearance={mode}
                 style={styles.input}
                 placeholder="AAAA-MM-DD"
                 placeholderTextColor={
-                  colors.gray
+                  colors.textSecondary
                 }
                 value={applicationDate}
                 onChangeText={
@@ -492,10 +498,11 @@ export default function VaccinesScreen({
               </Text>
 
               <TextInput
+        keyboardAppearance={mode}
                 style={styles.input}
                 placeholder="AAAA-MM-DD"
                 placeholderTextColor={
-                  colors.gray
+                  colors.textSecondary
                 }
                 value={dueDate}
                 onChangeText={setDueDate}
@@ -526,7 +533,7 @@ export default function VaccinesScreen({
                 {isCreating ||
                 isUpdating ? (
                   <ActivityIndicator
-                    color={colors.primary}
+                    color={colors.onAccent}
                   />
                 ) : (
                   <Text
@@ -569,7 +576,7 @@ export default function VaccinesScreen({
               <View style={styles.loading}>
                 <ActivityIndicator
                   size="large"
-                  color={colors.teal}
+                  color={colors.accentText}
                 />
 
                 <Text
@@ -585,7 +592,7 @@ export default function VaccinesScreen({
                 <Ionicons
                   name="alert-circle-outline"
                   size={40}
-                  color={colors.teal}
+                  color={colors.accentText}
                 />
 
                 <Text
@@ -617,7 +624,7 @@ export default function VaccinesScreen({
                 <Ionicons
                   name="medical-outline"
                   size={42}
-                  color={colors.teal}
+                  color={colors.accentText}
                 />
 
                 <Text
@@ -657,7 +664,7 @@ export default function VaccinesScreen({
                       <Ionicons
                         name="medical"
                         size={24}
-                        color={colors.white}
+                        color={colors.onAccent}
                       />
                     </View>
 
@@ -751,7 +758,7 @@ export default function VaccinesScreen({
                         name="create-outline"
                         size={18}
                         color={
-                          colors.primary
+                          colors.text
                         }
                       />
 
@@ -777,7 +784,7 @@ export default function VaccinesScreen({
                       <Ionicons
                         name="trash-outline"
                         size={18}
-                        color={colors.white}
+                        color={colors.onDanger}
                       />
 
                       <Text
@@ -805,7 +812,7 @@ export default function VaccinesScreen({
               <View style={styles.loading}>
                 <ActivityIndicator
                   size="large"
-                  color={colors.teal}
+                  color={colors.accentText}
                 />
 
                 <Text style={styles.loadingText}>
@@ -817,7 +824,7 @@ export default function VaccinesScreen({
                 <Ionicons
                   name="alert-circle-outline"
                   size={40}
-                  color={colors.teal}
+                  color={colors.accentText}
                 />
 
                 <Text style={styles.emptyTitle}>
@@ -840,7 +847,7 @@ export default function VaccinesScreen({
                 <Ionicons
                   name="heart-outline"
                   size={42}
-                  color={colors.teal}
+                  color={colors.accentText}
                 />
 
                 <Text style={styles.emptyTitle}>
@@ -862,7 +869,7 @@ export default function VaccinesScreen({
                       <Ionicons
                         name="heart-outline"
                         size={22}
-                        color={colors.white}
+                        color={colors.onAccent}
                       />
                     </View>
 
@@ -902,10 +909,10 @@ export default function VaccinesScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.background,
   },
 
   content: {
@@ -915,20 +922,20 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 30,
     fontWeight: "800",
   },
 
   subtitle: {
-    color: colors.mint,
+    color: colors.textSecondary,
     fontSize: 14,
     marginTop: 6,
     marginBottom: 24,
   },
 
   sectionTitle: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 14,
     fontWeight: "700",
     marginBottom: 10,
@@ -939,7 +946,7 @@ const styles = StyleSheet.create({
   },
 
   petButton: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     paddingVertical: 11,
     paddingHorizontal: 14,
@@ -950,33 +957,33 @@ const styles = StyleSheet.create({
   },
 
   petButtonSelected: {
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
   },
 
   petButtonText: {
-    color: colors.primary,
+    color: colors.text,
     fontWeight: "700",
   },
 
   petButtonTextSelected: {
-    color: colors.primary,
+    color: colors.onAccent,
   },
 
   formCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     padding: 20,
   },
 
   formTitle: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 21,
     fontWeight: "800",
     marginBottom: 18,
   },
 
   editingNotice: {
-    backgroundColor: colors.mint,
+    backgroundColor: colors.successSurface,
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 12,
@@ -988,37 +995,37 @@ const styles = StyleSheet.create({
   },
 
   editingNoticeText: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 13,
     fontWeight: "700",
     flex: 1,
   },
 
   label: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 13,
     fontWeight: "700",
     marginBottom: 7,
   },
 
   input: {
-    backgroundColor: "#F5F5F5",
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 14,
     paddingHorizontal: 15,
     paddingVertical: 13,
-    color: colors.primary,
+    color: colors.text,
     fontSize: 15,
     marginBottom: 14,
   },
 
   formError: {
-    color: "#C62828",
+    color: colors.dangerText,
     fontSize: 13,
     marginBottom: 10,
   },
 
   saveButton: {
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     borderRadius: 15,
     padding: 15,
     alignItems: "center",
@@ -1026,14 +1033,14 @@ const styles = StyleSheet.create({
   },
 
   saveButtonText: {
-    color: colors.primary,
+    color: colors.onAccent,
     fontSize: 15,
     fontWeight: "800",
   },
 
   cancelButton: {
     borderWidth: 1,
-    borderColor: colors.gray,
+    borderColor: colors.border,
     borderRadius: 15,
     padding: 13,
     alignItems: "center",
@@ -1041,7 +1048,7 @@ const styles = StyleSheet.create({
   },
 
   cancelButtonText: {
-    color: colors.primary,
+    color: colors.text,
     fontWeight: "700",
   },
 
@@ -1050,7 +1057,7 @@ const styles = StyleSheet.create({
   },
 
   vaccinesTitle: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 20,
     fontWeight: "800",
     marginTop: 28,
@@ -1058,14 +1065,14 @@ const styles = StyleSheet.create({
   },
 
   careTitle: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 20,
     fontWeight: "800",
     marginTop: 30,
   },
 
   careSubtitle: {
-    color: colors.mint,
+    color: colors.textSecondary,
     fontSize: 13,
     lineHeight: 18,
     marginTop: 4,
@@ -1073,7 +1080,7 @@ const styles = StyleSheet.create({
   },
 
   careCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 15,
     marginBottom: 11,
@@ -1086,7 +1093,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1096,27 +1103,27 @@ const styles = StyleSheet.create({
   },
 
   careType: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 15,
     fontWeight: "800",
   },
 
   careDescription: {
-    color: colors.gray,
+    color: colors.textSecondary,
     fontSize: 13,
     lineHeight: 18,
     marginTop: 4,
   },
 
   careDate: {
-    color: colors.gray,
+    color: colors.textSecondary,
     fontSize: 11,
     fontWeight: "700",
     marginTop: 7,
   },
 
   vaccineCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 18,
     marginBottom: 14,
@@ -1132,7 +1139,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1142,13 +1149,13 @@ const styles = StyleSheet.create({
   },
 
   vaccineName: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 18,
     fontWeight: "800",
   },
 
   vaccineStatus: {
-    color: colors.teal,
+    color: colors.accentText,
     fontSize: 13,
     fontWeight: "700",
     marginTop: 3,
@@ -1157,19 +1164,19 @@ const styles = StyleSheet.create({
   dateSection: {
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: "#F7F7F7",
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 13,
     padding: 13,
     marginTop: 16,
   },
 
   dateLabel: {
-    color: colors.gray,
+    color: colors.textSecondary,
     fontSize: 11,
   },
 
   dateValue: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 13,
     fontWeight: "700",
     marginTop: 3,
@@ -1183,7 +1190,7 @@ const styles = StyleSheet.create({
 
   editButton: {
     flex: 1,
-    backgroundColor: colors.mint,
+    backgroundColor: colors.successSurface,
     borderRadius: 12,
     padding: 11,
     flexDirection: "row",
@@ -1193,7 +1200,7 @@ const styles = StyleSheet.create({
   },
 
   editButtonText: {
-    color: colors.primary,
+    color: colors.text,
     fontWeight: "800",
   },
 
@@ -1209,19 +1216,19 @@ const styles = StyleSheet.create({
   },
 
   deleteButtonText: {
-    color: colors.white,
+    color: colors.onDanger,
     fontWeight: "800",
   },
 
   emptyCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 26,
     alignItems: "center",
   },
 
   emptyTitle: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 17,
     fontWeight: "800",
     marginTop: 10,
@@ -1229,7 +1236,7 @@ const styles = StyleSheet.create({
   },
 
   emptyText: {
-    color: colors.gray,
+    color: colors.textSecondary,
     textAlign: "center",
     marginTop: 7,
     lineHeight: 19,
@@ -1241,12 +1248,12 @@ const styles = StyleSheet.create({
   },
 
   loadingText: {
-    color: colors.white,
+    color: colors.text,
     marginTop: 10,
   },
 
   retryButton: {
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     paddingVertical: 11,
     paddingHorizontal: 20,
     borderRadius: 12,
@@ -1254,13 +1261,13 @@ const styles = StyleSheet.create({
   },
 
   retryText: {
-    color: colors.primary,
+    color: colors.text,
     fontWeight: "800",
   },
 
   restricted: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.background,
     alignItems: "center",
     justifyContent: "center",
     padding: 30,
@@ -1268,14 +1275,14 @@ const styles = StyleSheet.create({
   },
 
   restrictedTitle: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 25,
     fontWeight: "800",
     marginTop: 14,
   },
 
   restrictedText: {
-    color: colors.mint,
+    color: colors.textSecondary,
     textAlign: "center",
     marginTop: 8,
     lineHeight: 20,

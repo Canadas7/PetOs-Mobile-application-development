@@ -4,7 +4,7 @@ import {
   View,
 } from "react-native";
 
-import { NavigationContainer } from "@react-navigation/native";
+import { DarkTheme, DefaultTheme, NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import {
@@ -30,7 +30,9 @@ import {
   useAuth,
 } from "./src/contexts/AuthContext";
 
-import colors from "./src/styles/colors";
+import { StatusBar } from "expo-status-bar";
+import { ThemeProvider } from "./src/contexts/ThemeContext";
+import { useTheme } from "./src/hooks/useTheme";
 
 const Stack =
   createNativeStackNavigator<RootStackParamList>();
@@ -39,23 +41,40 @@ const queryClient = new QueryClient();
 
 function AppNavigator() {
   const { session, loading } = useAuth();
+  const { mode, colors, themeLoading } = useTheme();
+  const baseTheme = mode === "dark" ? DarkTheme : DefaultTheme;
+  const navigationTheme = {
+    ...baseTheme,
+    colors: {
+      ...baseTheme.colors,
+      primary: colors.accentText,
+      background: colors.background,
+      card: colors.surface,
+      text: colors.text,
+      border: colors.border,
+      notification: colors.danger,
+    },
+  };
 
-  if (loading) {
+  if (loading || themeLoading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <StatusBar style={mode === "dark" ? "light" : "dark"} />
         <ActivityIndicator
           size="large"
-          color={colors.teal}
+          color={colors.accentText}
         />
       </View>
     );
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={navigationTheme}>
+      <StatusBar style={mode === "dark" ? "light" : "dark"} />
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
+          contentStyle: { backgroundColor: colors.background },
         }}
       >
         {!session ? (
@@ -116,9 +135,11 @@ function AppNavigator() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <AppNavigator />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppNavigator />
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
@@ -126,7 +147,6 @@ export default function App() {
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
-    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
