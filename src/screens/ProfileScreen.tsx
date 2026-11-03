@@ -150,6 +150,17 @@ export default function ProfileScreen({ navigation }: any) {
       </View>
 
       <TouchableOpacity
+        style={[styles.infoCard, styles.aboutButton]}
+        accessibilityRole="button"
+        accessibilityLabel="Sobre o App"
+        onPress={() => navigation.navigate("About")}
+      >
+        <Ionicons name="information-circle-outline" size={24} color={colors.accentText} />
+        <Text style={[styles.infoText, styles.infoContent]}>Sobre o App</Text>
+        <Ionicons name="chevron-forward" size={22} color={colors.textSecondary} />
+      </TouchableOpacity>
+
+      <TouchableOpacity
         style={styles.logoutButton}
         onPress={handleLogout}
       >
@@ -299,6 +310,14 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: colors.border,
+  },
+
+  aboutButton: {
+    marginTop: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    minHeight: 56,
   },
 
   logoutButton: {
