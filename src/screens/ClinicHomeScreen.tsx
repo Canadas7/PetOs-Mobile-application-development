@@ -12,7 +12,9 @@ import {
   MaterialIcons,
 } from "@expo/vector-icons";
 
-import colors from "../styles/colors";
+import type { ThemeColors } from "../styles/colors";
+import { useTheme } from "../hooks/useTheme";
+import { useThemedStyles } from "../hooks/useThemedStyles";
 import BottomNavigation from "../components/BottomNavigation";
 
 import {
@@ -27,6 +29,8 @@ import { useAllVaccines } from "../hooks/useAllVaccines";
 export default function ClinicHomeScreen({
   navigation,
 }: any) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const { session } = useAuth();
 
   const {
@@ -91,7 +95,7 @@ export default function ClinicHomeScreen({
       <View style={styles.loadingContainer}>
         <ActivityIndicator
           size="large"
-          color={colors.teal}
+          color={colors.accentText}
         />
 
         <Text style={styles.loadingText}>
@@ -107,7 +111,7 @@ export default function ClinicHomeScreen({
         <Ionicons
           name="cloud-offline-outline"
           size={54}
-          color={colors.teal}
+          color={colors.accentText}
         />
 
         <Text style={styles.errorTitle}>
@@ -130,7 +134,7 @@ export default function ClinicHomeScreen({
           <Ionicons
             name="refresh-outline"
             size={19}
-            color={colors.primary}
+            color={colors.onAccent}
           />
 
           <Text style={styles.retryButtonText}>
@@ -159,7 +163,7 @@ export default function ClinicHomeScreen({
             <MaterialIcons
               name="pets"
               size={34}
-              color={colors.teal}
+              color={colors.accentText}
             />
 
             <Text style={styles.logo}>
@@ -176,7 +180,7 @@ export default function ClinicHomeScreen({
             <Ionicons
               name="medkit-outline"
               size={22}
-              color={colors.primary}
+              color={colors.onAccent}
             />
           </TouchableOpacity>
         </View>
@@ -203,7 +207,7 @@ export default function ClinicHomeScreen({
               <MaterialIcons
                 name="pets"
                 size={30}
-                color={colors.teal}
+                color={colors.accentText}
               />
             </View>
 
@@ -226,7 +230,7 @@ export default function ClinicHomeScreen({
               <Ionicons
                 name="medical-outline"
                 size={30}
-                color={colors.teal}
+                color={colors.accentText}
               />
             </View>
 
@@ -251,8 +255,8 @@ export default function ClinicHomeScreen({
                 size={30}
                 color={
                   attentionVaccines.length > 0
-                    ? "#C62828"
-                    : colors.teal
+                    ? colors.dangerText
+                    : colors.accentText
                 }
               />
             </View>
@@ -282,7 +286,7 @@ export default function ClinicHomeScreen({
               <MaterialIcons
                 name="pets"
                 size={28}
-                color={colors.white}
+                color={colors.onAccent}
               />
             </View>
 
@@ -300,7 +304,7 @@ export default function ClinicHomeScreen({
             <Ionicons
               name="chevron-forward"
               size={23}
-              color={colors.gray}
+              color={colors.textSecondary}
             />
           </TouchableOpacity>
 
@@ -314,7 +318,7 @@ export default function ClinicHomeScreen({
               <Ionicons
                 name="medical"
                 size={27}
-                color={colors.white}
+                color={colors.onAccent}
               />
             </View>
 
@@ -332,7 +336,7 @@ export default function ClinicHomeScreen({
             <Ionicons
               name="chevron-forward"
               size={23}
-              color={colors.gray}
+              color={colors.textSecondary}
             />
           </TouchableOpacity>
         </View>
@@ -343,7 +347,7 @@ export default function ClinicHomeScreen({
               <Ionicons
                 name="notifications-outline"
                 size={23}
-                color={colors.teal}
+                color={colors.accentText}
               />
 
               <Text style={styles.sectionTitle}>
@@ -367,7 +371,7 @@ export default function ClinicHomeScreen({
               <Ionicons
                 name="shield-checkmark-outline"
                 size={32}
-                color={colors.teal}
+                color={colors.accentText}
               />
 
               <View style={styles.emptyContent}>
@@ -405,7 +409,7 @@ export default function ClinicHomeScreen({
                     <Ionicons
                       name="medical"
                       size={23}
-                      color={colors.white}
+                      color={vaccine.status === "OVERDUE" ? colors.onDanger : colors.onAccent}
                     />
                   </View>
 
@@ -460,7 +464,7 @@ export default function ClinicHomeScreen({
                   <Ionicons
                     name="chevron-forward"
                     size={22}
-                    color={colors.gray}
+                    color={colors.textSecondary}
                   />
                 </TouchableOpacity>
               ))
@@ -476,10 +480,10 @@ export default function ClinicHomeScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.background,
   },
 
   content: {
@@ -490,19 +494,19 @@ const styles = StyleSheet.create({
 
   loadingContainer: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.background,
     alignItems: "center",
     justifyContent: "center",
   },
 
   loadingText: {
-    color: colors.white,
+    color: colors.text,
     marginTop: 14,
   },
 
   errorContainer: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.background,
     alignItems: "center",
     justifyContent: "center",
     padding: 30,
@@ -510,7 +514,7 @@ const styles = StyleSheet.create({
   },
 
   errorTitle: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 22,
     fontWeight: "800",
     textAlign: "center",
@@ -518,7 +522,7 @@ const styles = StyleSheet.create({
   },
 
   errorText: {
-    color: colors.mint,
+    color: colors.textSecondary,
     fontSize: 14,
     textAlign: "center",
     lineHeight: 20,
@@ -527,7 +531,7 @@ const styles = StyleSheet.create({
   },
 
   retryButton: {
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     borderRadius: 14,
     paddingVertical: 13,
     paddingHorizontal: 20,
@@ -538,7 +542,7 @@ const styles = StyleSheet.create({
   },
 
   retryButtonText: {
-    color: colors.primary,
+    color: colors.onAccent,
     fontSize: 14,
     fontWeight: "800",
   },
@@ -556,7 +560,7 @@ const styles = StyleSheet.create({
   },
 
   logo: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 28,
     fontWeight: "800",
   },
@@ -565,11 +569,11 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: colors.white,
+    borderColor: colors.border,
   },
 
   greeting: {
@@ -578,13 +582,13 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 25,
     fontWeight: "800",
   },
 
   subtitle: {
-    color: colors.mint,
+    color: colors.textSecondary,
     fontSize: 14,
     marginTop: 5,
   },
@@ -596,7 +600,7 @@ const styles = StyleSheet.create({
 
   summaryCard: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 14,
     alignItems: "center",
@@ -606,7 +610,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.mint,
+    backgroundColor: colors.successSurface,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -615,20 +619,20 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#FFF1F1",
+    backgroundColor: colors.dangerSurface,
     alignItems: "center",
     justifyContent: "center",
   },
 
   summaryNumber: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 25,
     fontWeight: "800",
     marginTop: 8,
   },
 
   summaryLabel: {
-    color: colors.gray,
+    color: colors.textSecondary,
     fontSize: 11,
     fontWeight: "700",
     textAlign: "center",
@@ -640,13 +644,13 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 18,
     fontWeight: "800",
   },
 
   actionCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 16,
     marginTop: 12,
@@ -659,7 +663,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -669,13 +673,13 @@ const styles = StyleSheet.create({
   },
 
   actionTitle: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 15,
     fontWeight: "800",
   },
 
   actionText: {
-    color: colors.gray,
+    color: colors.textSecondary,
     fontSize: 12,
     lineHeight: 17,
     marginTop: 3,
@@ -700,13 +704,13 @@ const styles = StyleSheet.create({
   },
 
   seeAll: {
-    color: colors.teal,
+    color: colors.accentText,
     fontSize: 12,
     fontWeight: "800",
   },
 
   emptyCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 17,
     flexDirection: "row",
@@ -719,20 +723,20 @@ const styles = StyleSheet.create({
   },
 
   emptyTitle: {
-    color: colors.primary,
+    color: colors.text,
     fontWeight: "800",
     fontSize: 14,
   },
 
   emptyText: {
-    color: colors.gray,
+    color: colors.textSecondary,
     fontSize: 12,
     lineHeight: 17,
     marginTop: 3,
   },
 
   vaccineCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 15,
     marginBottom: 10,
@@ -745,13 +749,13 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     alignItems: "center",
     justifyContent: "center",
   },
 
   overdueIcon: {
-    backgroundColor: "#C62828",
+    backgroundColor: colors.danger,
   },
 
   vaccineContent: {
@@ -759,30 +763,30 @@ const styles = StyleSheet.create({
   },
 
   vaccineName: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 15,
     fontWeight: "800",
   },
 
   vaccineInfo: {
-    color: colors.gray,
+    color: colors.textSecondary,
     fontSize: 12,
     marginTop: 2,
   },
 
   vaccineStatus: {
-    color: colors.teal,
+    color: colors.accentText,
     fontSize: 12,
     fontWeight: "800",
     marginTop: 5,
   },
 
   overdueText: {
-    color: "#C62828",
+    color: colors.dangerText,
   },
 
   vaccineDate: {
-    color: colors.gray,
+    color: colors.textSecondary,
     fontSize: 11,
     marginTop: 3,
   },

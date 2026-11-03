@@ -16,7 +16,9 @@ import {
   MaterialIcons,
 } from "@expo/vector-icons";
 
-import colors from "../styles/colors";
+import type { ThemeColors } from "../styles/colors";
+import { useTheme } from "../hooks/useTheme";
+import { useThemedStyles } from "../hooks/useThemedStyles";
 import BottomNavigation from "../components/BottomNavigation";
 
 import {
@@ -78,6 +80,8 @@ export default function PetDetailsScreen({
   route,
   navigation,
 }: any) {
+  const { colors, mode } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const initialPet = route.params?.pet;
   const petId =
     initialPet?.id ?? null;
@@ -463,7 +467,7 @@ export default function PetDetailsScreen({
       >
         <ActivityIndicator
           size="large"
-          color={colors.teal}
+          color={colors.accentText}
         />
 
         <Text
@@ -544,7 +548,7 @@ export default function PetDetailsScreen({
             <Ionicons
               name="chevron-back"
               size={30}
-              color={colors.white}
+              color={colors.text}
             />
           </TouchableOpacity>
 
@@ -572,7 +576,7 @@ export default function PetDetailsScreen({
             <Ionicons
               name="refresh-outline"
               size={25}
-              color={colors.teal}
+              color={colors.accentText}
             />
           </TouchableOpacity>
         </View>
@@ -586,7 +590,7 @@ export default function PetDetailsScreen({
                 <MaterialIcons
                   name="pets"
                   size={54}
-                  color={colors.teal}
+                  color={colors.accentText}
                 />
               </View>
 
@@ -602,7 +606,7 @@ export default function PetDetailsScreen({
                 <MaterialIcons
                   name="pets"
                   size={22}
-                  color={colors.teal}
+                  color={colors.accentText}
                 />
 
                 <View>
@@ -632,7 +636,7 @@ export default function PetDetailsScreen({
                 <Ionicons
                   name="paw-outline"
                   size={22}
-                  color={colors.teal}
+                  color={colors.accentText}
                 />
 
                 <View>
@@ -661,7 +665,7 @@ export default function PetDetailsScreen({
                 <Ionicons
                   name="calendar-outline"
                   size={22}
-                  color={colors.teal}
+                  color={colors.accentText}
                 />
 
                 <View>
@@ -691,7 +695,7 @@ export default function PetDetailsScreen({
                 <Ionicons
                   name="scale-outline"
                   size={22}
-                  color={colors.teal}
+                  color={colors.accentText}
                 />
 
                 <View>
@@ -721,7 +725,7 @@ export default function PetDetailsScreen({
                 <Ionicons
                   name="person-outline"
                   size={22}
-                  color={colors.teal}
+                  color={colors.accentText}
                 />
 
                 <View>
@@ -749,7 +753,7 @@ export default function PetDetailsScreen({
                 <Ionicons
                   name="call-outline"
                   size={22}
-                  color={colors.teal}
+                  color={colors.accentText}
                 />
 
                 <View>
@@ -787,7 +791,7 @@ export default function PetDetailsScreen({
                   name="create-outline"
                   size={21}
                   color={
-                    colors.primary
+                    colors.onAccent
                   }
                 />
 
@@ -816,7 +820,7 @@ export default function PetDetailsScreen({
                 }
               >
                 <ActivityIndicator
-                  color={colors.teal}
+                  color={colors.accentText}
                 />
 
                 <Text
@@ -839,7 +843,7 @@ export default function PetDetailsScreen({
                 <Ionicons
                   name="alert-circle-outline"
                   size={28}
-                  color={colors.teal}
+                  color={colors.accentText}
                 />
 
                 <View style={{ flex: 1 }}>
@@ -875,7 +879,7 @@ export default function PetDetailsScreen({
                     <Ionicons
                       name="medical-outline"
                       size={27}
-                      color={colors.teal}
+                      color={colors.accentText}
                     />
 
                     <Text
@@ -904,7 +908,7 @@ export default function PetDetailsScreen({
                     <Ionicons
                       name="heart-outline"
                       size={27}
-                      color={colors.teal}
+                      color={colors.accentText}
                     />
 
                     <Text
@@ -933,7 +937,7 @@ export default function PetDetailsScreen({
                     <Ionicons
                       name="notifications-outline"
                       size={27}
-                      color={colors.teal}
+                      color={colors.accentText}
                     />
 
                     <Text
@@ -998,7 +1002,7 @@ export default function PetDetailsScreen({
                             name="medical"
                             size={20}
                             color={
-                              colors.white
+                              colors.onAccent
                             }
                           />
                         </View>
@@ -1095,7 +1099,7 @@ export default function PetDetailsScreen({
                             name="heart"
                             size={20}
                             color={
-                              colors.white
+                              colors.onAccent
                             }
                           />
                         </View>
@@ -1187,7 +1191,7 @@ export default function PetDetailsScreen({
                             name="notifications"
                             size={20}
                             color={
-                              colors.white
+                              colors.onDanger
                             }
                           />
                         </View>
@@ -1243,7 +1247,7 @@ export default function PetDetailsScreen({
                 <Ionicons
                   name="medkit-outline"
                   size={25}
-                  color={colors.teal}
+                  color={colors.accentText}
                 />
 
                 <View
@@ -1308,6 +1312,7 @@ export default function PetDetailsScreen({
             </Text>
 
             <TextInput
+        keyboardAppearance={mode}
               style={styles.input}
               value={name}
               onChangeText={setName}
@@ -1361,6 +1366,7 @@ export default function PetDetailsScreen({
             </Text>
 
             <TextInput
+        keyboardAppearance={mode}
               style={styles.input}
               value={breed}
               onChangeText={setBreed}
@@ -1372,6 +1378,7 @@ export default function PetDetailsScreen({
             </Text>
 
             <TextInput
+        keyboardAppearance={mode}
               style={styles.input}
               value={birthDate}
               onChangeText={
@@ -1386,6 +1393,7 @@ export default function PetDetailsScreen({
             </Text>
 
             <TextInput
+        keyboardAppearance={mode}
               style={styles.input}
               value={weight}
               onChangeText={setWeight}
@@ -1398,6 +1406,7 @@ export default function PetDetailsScreen({
             </Text>
 
             <TextInput
+        keyboardAppearance={mode}
               style={styles.input}
               value={tutorPhone}
               onChangeText={
@@ -1430,7 +1439,7 @@ export default function PetDetailsScreen({
               {isUpdatingPet ? (
                 <ActivityIndicator
                   color={
-                    colors.primary
+                    colors.onAccent
                   }
                 />
               ) : (
@@ -1473,10 +1482,10 @@ export default function PetDetailsScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.background,
   },
 
   content: {
@@ -1487,7 +1496,7 @@ const styles = StyleSheet.create({
 
   centerContainer: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.background,
     padding: 24,
     alignItems: "center",
     justifyContent: "center",
@@ -1501,19 +1510,19 @@ const styles = StyleSheet.create({
   },
 
   headerSubtitle: {
-    color: colors.mint,
+    color: colors.textSecondary,
     fontSize: 12,
     marginTop: 2,
   },
 
   title: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 28,
     fontWeight: "800",
   },
 
   card: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 24,
     padding: 24,
   },
@@ -1522,7 +1531,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: colors.mint,
+    backgroundColor: colors.successSurface,
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "center",
@@ -1530,7 +1539,7 @@ const styles = StyleSheet.create({
   },
 
   petName: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 32,
     fontWeight: "800",
     marginBottom: 22,
@@ -1546,19 +1555,19 @@ const styles = StyleSheet.create({
   },
 
   infoLabel: {
-    color: colors.gray,
+    color: colors.textSecondary,
     fontSize: 12,
     marginBottom: 2,
   },
 
   infoText: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 16,
     fontWeight: "600",
   },
 
   editButton: {
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     padding: 16,
     borderRadius: 16,
     marginTop: 18,
@@ -1569,13 +1578,13 @@ const styles = StyleSheet.create({
   },
 
   editButtonText: {
-    color: colors.primary,
+    color: colors.onAccent,
     fontSize: 16,
     fontWeight: "800",
   },
 
   sectionTitle: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 21,
     fontWeight: "800",
     marginTop: 28,
@@ -1583,7 +1592,7 @@ const styles = StyleSheet.create({
   },
 
   healthLoading: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 20,
     flexDirection: "row",
@@ -1592,12 +1601,12 @@ const styles = StyleSheet.create({
   },
 
   healthLoadingText: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 13,
   },
 
   historyErrorCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 18,
     flexDirection: "row",
@@ -1606,13 +1615,13 @@ const styles = StyleSheet.create({
   },
 
   healthErrorTitle: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 14,
     fontWeight: "800",
   },
 
   healthErrorText: {
-    color: colors.gray,
+    color: colors.textSecondary,
     fontSize: 12,
     marginTop: 3,
   },
@@ -1624,7 +1633,7 @@ const styles = StyleSheet.create({
 
   summaryCard: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     paddingVertical: 16,
     paddingHorizontal: 8,
@@ -1632,21 +1641,21 @@ const styles = StyleSheet.create({
   },
 
   summaryNumber: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 24,
     fontWeight: "800",
     marginTop: 7,
   },
 
   summaryLabel: {
-    color: colors.gray,
+    color: colors.textSecondary,
     fontSize: 11,
     fontWeight: "700",
     marginTop: 2,
   },
 
   subsectionTitle: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 16,
     fontWeight: "800",
     marginTop: 22,
@@ -1654,7 +1663,7 @@ const styles = StyleSheet.create({
   },
 
   healthItem: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 17,
     padding: 14,
     flexDirection: "row",
@@ -1666,67 +1675,67 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     alignItems: "center",
     justifyContent: "center",
   },
 
   alertHealthIcon: {
-    backgroundColor: "#C62828",
+    backgroundColor: colors.danger,
   },
 
   healthItemTitle: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 14,
     fontWeight: "800",
   },
 
   healthItemText: {
-    color: colors.gray,
+    color: colors.textSecondary,
     fontSize: 12,
     lineHeight: 17,
     marginTop: 3,
   },
 
   healthItemDate: {
-    color: colors.teal,
+    color: colors.accentText,
     fontSize: 11,
     fontWeight: "700",
     marginTop: 5,
   },
 
   emptySectionCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 17,
     padding: 16,
   },
 
   emptySectionText: {
-    color: colors.gray,
+    color: colors.textSecondary,
     fontSize: 13,
     textAlign: "center",
   },
 
   editTitle: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 23,
     fontWeight: "800",
     marginBottom: 20,
   },
 
   label: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 14,
     fontWeight: "700",
     marginBottom: 7,
   },
 
   input: {
-    backgroundColor: "#F5F5F5",
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: colors.primary,
+    color: colors.text,
     fontSize: 16,
     marginBottom: 15,
   },
@@ -1742,28 +1751,28 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 12,
-    backgroundColor: "#F3F3F3",
+    backgroundColor: colors.surfaceMuted,
     borderWidth: 1,
-    borderColor: "#E5E5E5",
+    borderColor: colors.border,
   },
 
   speciesButtonSelected: {
-    backgroundColor: colors.teal,
-    borderColor: colors.teal,
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
 
   speciesText: {
-    color: colors.primary,
+    color: colors.text,
     fontWeight: "600",
     fontSize: 13,
   },
 
   speciesTextSelected: {
-    color: colors.white,
+    color: colors.onAccent,
   },
 
   saveButton: {
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     borderRadius: 16,
     padding: 16,
     alignItems: "center",
@@ -1771,14 +1780,14 @@ const styles = StyleSheet.create({
   },
 
   saveButtonText: {
-    color: colors.primary,
+    color: colors.onAccent,
     fontSize: 16,
     fontWeight: "800",
   },
 
   cancelButton: {
     borderWidth: 1,
-    borderColor: colors.gray,
+    borderColor: colors.border,
     borderRadius: 16,
     padding: 15,
     alignItems: "center",
@@ -1786,7 +1795,7 @@ const styles = StyleSheet.create({
   },
 
   cancelButtonText: {
-    color: colors.primary,
+    color: colors.text,
     fontWeight: "700",
   },
 
@@ -1795,30 +1804,30 @@ const styles = StyleSheet.create({
   },
 
   formError: {
-    color: "#C62828",
+    color: colors.dangerText,
     marginBottom: 8,
   },
 
   loadingText: {
-    color: colors.white,
+    color: colors.text,
     marginTop: 14,
   },
 
   errorTitle: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 20,
     fontWeight: "800",
     textAlign: "center",
   },
 
   errorText: {
-    color: colors.mint,
+    color: colors.textSecondary,
     textAlign: "center",
     marginTop: 10,
   },
 
   mainButton: {
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     borderRadius: 14,
     paddingVertical: 14,
     paddingHorizontal: 30,
@@ -1826,12 +1835,12 @@ const styles = StyleSheet.create({
   },
 
   mainButtonText: {
-    color: colors.primary,
+    color: colors.onAccent,
     fontWeight: "800",
   },
 
   clinicCard: {
-    backgroundColor: colors.mint,
+    backgroundColor: colors.successSurface,
     borderRadius: 20,
     padding: 18,
     marginTop: 22,
@@ -1844,13 +1853,13 @@ const styles = StyleSheet.create({
   },
 
   clinicTitle: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 16,
     fontWeight: "800",
   },
 
   clinicText: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 13,
     lineHeight: 19,
     marginTop: 4,
@@ -1858,7 +1867,7 @@ const styles = StyleSheet.create({
 
   clinicVaccineButton: {
     alignSelf: "flex-start",
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 14,
@@ -1866,7 +1875,7 @@ const styles = StyleSheet.create({
   },
 
   clinicVaccineButtonText: {
-    color: colors.primary,
+    color: colors.onAccent,
     fontSize: 12,
     fontWeight: "800",
   },

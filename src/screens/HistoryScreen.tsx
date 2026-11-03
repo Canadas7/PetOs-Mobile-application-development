@@ -17,7 +17,9 @@ import {
 } from "@expo/vector-icons";
 
 
-import colors from "../styles/colors";
+import type { ThemeColors } from "../styles/colors";
+import { useTheme } from "../hooks/useTheme";
+import { useThemedStyles } from "../hooks/useThemedStyles";
 import BottomNavigation from "../components/BottomNavigation";
 
 import {
@@ -98,6 +100,8 @@ function getToday() {
 export default function HistoryScreen({
   navigation,
 }: any) {
+  const { colors, mode } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const { session } = useAuth();
 
   const [tab, setTab] =
@@ -432,7 +436,7 @@ export default function HistoryScreen({
         <Ionicons
           name="lock-closed-outline"
           size={56}
-          color={colors.teal}
+          color={colors.accentText}
         />
 
         <Text style={styles.restrictedTitle}>
@@ -479,8 +483,8 @@ export default function HistoryScreen({
               size={18}
               color={
                 tab === "CARE"
-                  ? colors.primary
-                  : colors.white
+                  ? colors.onAccent
+                  : colors.text
               }
             />
 
@@ -510,8 +514,8 @@ export default function HistoryScreen({
               size={18}
               color={
                 tab === "HISTORY"
-                  ? colors.primary
-                  : colors.white
+                  ? colors.onAccent
+                  : colors.text
               }
             />
 
@@ -530,14 +534,14 @@ export default function HistoryScreen({
         {petsLoading ? (
           <ActivityIndicator
             size="large"
-            color={colors.teal}
+            color={colors.accentText}
           />
         ) : pets.length === 0 ? (
           <View style={styles.emptyCard}>
             <MaterialIcons
               name="pets"
               size={42}
-              color={colors.teal}
+              color={colors.accentText}
             />
 
             <Text style={styles.emptyTitle}>
@@ -583,14 +587,14 @@ export default function HistoryScreen({
                       size={18}
                       color={
                         selected
-                          ? colors.primary
-                          : colors.teal
+                          ? colors.onAccent
+                          : colors.accentText
                       }
                     />
 
                     <Text
                       style={
-                        styles.petButtonText
+                        [styles.petButtonText, selected && { color: colors.onAccent }]
                       }
                     >
                       {pet.name}
@@ -655,8 +659,8 @@ export default function HistoryScreen({
                               size={19}
                               color={
                                 selected
-                                  ? colors.primary
-                                  : colors.teal
+                                  ? colors.text
+                                  : colors.accentText
                               }
                             />
 
@@ -682,13 +686,14 @@ export default function HistoryScreen({
                   </Text>
 
                   <TextInput
+        keyboardAppearance={mode}
                     style={[
                       styles.input,
                       styles.descriptionInput,
                     ]}
                     placeholder="Ex: Passeio de 30 minutos no parque"
                     placeholderTextColor={
-                      colors.gray
+                      colors.textSecondary
                     }
                     multiline
                     maxLength={500}
@@ -705,10 +710,11 @@ export default function HistoryScreen({
                   </Text>
 
                   <TextInput
+        keyboardAppearance={mode}
                     style={styles.input}
                     placeholder="AAAA-MM-DD"
                     placeholderTextColor={
-                      colors.gray
+                      colors.textSecondary
                     }
                     value={recordDate}
                     onChangeText={
@@ -740,7 +746,7 @@ export default function HistoryScreen({
                     isUpdatingRoutine ? (
                       <ActivityIndicator
                         color={
-                          colors.primary
+                          colors.onAccent
                         }
                       />
                     ) : (
@@ -784,7 +790,7 @@ export default function HistoryScreen({
 
                 {routinesLoading ? (
                   <ActivityIndicator
-                    color={colors.teal}
+                    color={colors.accentText}
                   />
                 ) : routinesError ? (
                   <TouchableOpacity
@@ -810,7 +816,7 @@ export default function HistoryScreen({
                     <Ionicons
                       name="heart-outline"
                       size={38}
-                      color={colors.teal}
+                      color={colors.accentText}
                     />
 
                     <Text
@@ -843,7 +849,7 @@ export default function HistoryScreen({
                             }
                             size={23}
                             color={
-                              colors.white
+                              colors.onAccent
                             }
                           />
                         </View>
@@ -897,7 +903,7 @@ export default function HistoryScreen({
                             name="create-outline"
                             size={22}
                             color={
-                              colors.teal
+                              colors.accentText
                             }
                           />
                         </TouchableOpacity>
@@ -925,7 +931,7 @@ export default function HistoryScreen({
             ) : historyLoading ? (
               <ActivityIndicator
                 size="large"
-                color={colors.teal}
+                color={colors.accentText}
               />
             ) : historyError ? (
               <TouchableOpacity
@@ -946,7 +952,7 @@ export default function HistoryScreen({
                 <Ionicons
                   name="time-outline"
                   size={40}
-                  color={colors.teal}
+                  color={colors.accentText}
                 />
 
                 <Text
@@ -979,7 +985,7 @@ export default function HistoryScreen({
                           : "heart"
                       }
                       size={22}
-                      color={colors.white}
+                      color={colors.onAccent}
                     />
                   </View>
 
@@ -1027,10 +1033,10 @@ export default function HistoryScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.background,
   },
 
   content: {
@@ -1040,13 +1046,13 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 30,
     fontWeight: "800",
   },
 
   subtitle: {
-    color: colors.mint,
+    color: colors.textSecondary,
     fontSize: 14,
     marginTop: 6,
     marginBottom: 20,
@@ -1066,25 +1072,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    backgroundColor:
-      "rgba(255,255,255,0.12)",
+    backgroundColor: colors.surfaceMuted,
   },
 
   tabSelected: {
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
   },
 
   tabText: {
-    color: colors.white,
+    color: colors.text,
     fontWeight: "800",
   },
 
   tabTextSelected: {
-    color: colors.primary,
+    color: colors.onAccent,
   },
 
   labelWhite: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 14,
     fontWeight: "700",
     marginBottom: 10,
@@ -1095,7 +1100,7 @@ const styles = StyleSheet.create({
   },
 
   petButton: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 12,
     marginRight: 10,
@@ -1105,29 +1110,29 @@ const styles = StyleSheet.create({
   },
 
   petButtonSelected: {
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
   },
 
   petButtonText: {
-    color: colors.primary,
+    color: colors.text,
     fontWeight: "700",
   },
 
   formCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     padding: 20,
     borderRadius: 22,
   },
 
   formTitle: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 21,
     fontWeight: "800",
     marginBottom: 18,
   },
 
   label: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 13,
     fontWeight: "700",
     marginBottom: 7,
@@ -1141,7 +1146,7 @@ const styles = StyleSheet.create({
   },
 
   typeButton: {
-    backgroundColor: "#F4F4F4",
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 12,
     paddingHorizontal: 11,
     paddingVertical: 9,
@@ -1151,21 +1156,21 @@ const styles = StyleSheet.create({
   },
 
   typeButtonSelected: {
-    backgroundColor: colors.mint,
+    backgroundColor: colors.successSurface,
   },
 
   typeText: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 12,
     fontWeight: "700",
   },
 
   input: {
-    backgroundColor: "#F5F5F5",
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 14,
     paddingHorizontal: 15,
     paddingVertical: 13,
-    color: colors.primary,
+    color: colors.text,
     marginBottom: 15,
   },
 
@@ -1175,25 +1180,25 @@ const styles = StyleSheet.create({
   },
 
   formError: {
-    color: "#C62828",
+    color: colors.dangerText,
     marginBottom: 10,
   },
 
   saveButton: {
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     borderRadius: 15,
     padding: 15,
     alignItems: "center",
   },
 
   saveButtonText: {
-    color: colors.primary,
+    color: colors.onAccent,
     fontWeight: "800",
   },
 
   cancelButton: {
     borderWidth: 1,
-    borderColor: colors.gray,
+    borderColor: colors.border,
     borderRadius: 15,
     padding: 13,
     alignItems: "center",
@@ -1201,12 +1206,12 @@ const styles = StyleSheet.create({
   },
 
   cancelText: {
-    color: colors.primary,
+    color: colors.text,
     fontWeight: "700",
   },
 
   sectionTitle: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 20,
     fontWeight: "800",
     marginTop: 26,
@@ -1214,7 +1219,7 @@ const styles = StyleSheet.create({
   },
 
   routineCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 16,
     marginBottom: 12,
@@ -1227,7 +1232,7 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1237,26 +1242,26 @@ const styles = StyleSheet.create({
   },
 
   routineTitle: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 16,
     fontWeight: "800",
   },
 
   routineDescription: {
-    color: colors.gray,
+    color: colors.textSecondary,
     fontSize: 13,
     marginTop: 3,
   },
 
   routineDate: {
-    color: colors.teal,
+    color: colors.accentText,
     fontSize: 12,
     fontWeight: "700",
     marginTop: 5,
   },
 
   historyCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 16,
     marginBottom: 12,
@@ -1268,67 +1273,67 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.teal,
+    backgroundColor: colors.accent,
     alignItems: "center",
     justifyContent: "center",
   },
 
   historyTitle: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 15,
     fontWeight: "800",
   },
 
   historyText: {
-    color: colors.gray,
+    color: colors.textSecondary,
     fontSize: 13,
     marginTop: 4,
   },
 
   historyDate: {
-    color: colors.teal,
+    color: colors.accentText,
     fontSize: 12,
     fontWeight: "700",
     marginTop: 7,
   },
 
   emptyCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 25,
     alignItems: "center",
   },
 
   emptyTitle: {
-    color: colors.primary,
+    color: colors.text,
     fontWeight: "800",
     fontSize: 17,
     marginTop: 10,
   },
 
   errorText: {
-    color: colors.white,
+    color: colors.text,
     textAlign: "center",
     padding: 20,
   },
 
   restricted: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.background,
     alignItems: "center",
     justifyContent: "center",
     padding: 30,
   },
 
   restrictedTitle: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 24,
     fontWeight: "800",
     marginTop: 14,
   },
 
   restrictedText: {
-    color: colors.mint,
+    color: colors.textSecondary,
     textAlign: "center",
     marginTop: 8,
   },

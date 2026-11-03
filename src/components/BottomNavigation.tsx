@@ -10,13 +10,17 @@ import {
   MaterialIcons,
 } from "@expo/vector-icons";
 
-import colors from "../styles/colors";
+import type { ThemeColors } from "../styles/colors";
+import { useTheme } from "../hooks/useTheme";
+import { useThemedStyles } from "../hooks/useThemedStyles";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function BottomNavigation({
   navigation,
   current,
 }: any) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const { session } = useAuth();
 
   const isTutor = session?.role === "TUTOR";
@@ -34,8 +38,8 @@ export default function BottomNavigation({
           size={23}
           color={
             current === "Home"
-              ? colors.teal
-              : colors.gray
+              ? colors.accentText
+              : colors.textSecondary
           }
         />
 
@@ -62,8 +66,8 @@ export default function BottomNavigation({
           size={23}
           color={
             current === "PetsList"
-              ? colors.teal
-              : colors.gray
+              ? colors.accentText
+              : colors.textSecondary
           }
         />
 
@@ -91,8 +95,8 @@ export default function BottomNavigation({
             size={23}
             color={
               current === "History"
-                ? colors.teal
-                : colors.gray
+                ? colors.accentText
+                : colors.textSecondary
             }
           />
 
@@ -121,8 +125,8 @@ export default function BottomNavigation({
             size={23}
             color={
               current === "Vaccines"
-                ? colors.teal
-                : colors.gray
+                ? colors.accentText
+                : colors.textSecondary
             }
           />
 
@@ -150,8 +154,8 @@ export default function BottomNavigation({
           size={23}
           color={
             current === "Profile"
-              ? colors.teal
-              : colors.gray
+              ? colors.accentText
+              : colors.textSecondary
           }
         />
 
@@ -169,7 +173,7 @@ export default function BottomNavigation({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   bottomNav: {
     position: "absolute",
     left: 20,
@@ -177,7 +181,7 @@ const styles = StyleSheet.create({
     bottom: 18,
     height: 72,
 
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 24,
 
     paddingHorizontal: 10,
@@ -188,7 +192,7 @@ const styles = StyleSheet.create({
 
     elevation: 8,
 
-    shadowColor: "#000",
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 3,
@@ -208,14 +212,14 @@ const styles = StyleSheet.create({
   },
 
   navActive: {
-    color: colors.teal,
+    color: colors.accentText,
     fontWeight: "800",
     fontSize: 11,
     textAlign: "center",
   },
 
   navItem: {
-    color: colors.gray,
+    color: colors.textSecondary,
     fontWeight: "700",
     fontSize: 11,
     textAlign: "center",

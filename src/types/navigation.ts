@@ -14,4 +14,5 @@ export type RootStackParamList = {
   History: undefined;
   Vaccines: undefined;
   Profile: undefined;
+  About: undefined;
 };
