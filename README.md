@@ -1,7 +1,7 @@
 # PetOS
 
 Vídeo de apresentação:  
-[https://www.youtube.com/watch?v=qPNdumC8XH8](https://www.youtube.com/watch?v=qPNdumC8XH8)
+https://youtu.be/lcFd6p04ea4?is=i5uhJgpmSKX5rLi4
 
 ---
 
